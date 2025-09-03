@@ -23,6 +23,27 @@ model User {
 
   @@map("users")
 }
+model Direction {
+  id        Int      @id @default(autoincrement())
+  name      String   @unique
+  createdAt DateTime @default(now())
+  isActive  Boolean  @default(true)
+
+  vehicleActs VehicleAct[]
+
+  @@map("directions")
+}
+
+model TransportMethod {
+  id        Int      @id @default(autoincrement())
+  name      String   @unique
+  createdAt DateTime @default(now())
+  isActive  Boolean  @default(true)
+
+  vehicleActs VehicleAct[]
+
+  @@map("transport_methods")
+}
 
 model CarBrand {
   id        Int      @id @default(autoincrement())
@@ -147,8 +168,10 @@ model VehicleAct {
   date                    DateTime
   principal               String?
   sender                  String?
-  direction               String?
-  transportMethod         String?
+  directionId      Int?
+  direction        Direction?      @relation(fields: [directionId], references: [id], onDelete: SetNull)
+  transportMethodId Int?
+  transportMethod  TransportMethod? @relation(fields: [transportMethodId], references: [id], onDelete: SetNull)
   vin                     String          @unique
   licensePlate            String
   carBrandId              Int? // Меняем String? на Int? для соответствия с CarBrand.id

@@ -1,18 +1,17 @@
-console.log('JWT_SECRET:', process.env.JWT_SECRET ? 'SET' : 'NOT SET');
-console.log('DATABASE_URL:', process.env.DATABASE_URL ? 'SET' : 'NOT SET');
-console.log('Routes loaded:');
-console.log('- /api/auth');
-console.log('- /api/vehicles'); 
-console.log('- /api/inspections');
-console.log('- /vehicle-acts'); // Добавьте эту строку
-
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
-import path from 'path'; // ✅ ДОБАВЬТЕ ЭТОТ ИМПОРТ
+import path from 'path';
 import { logger } from './config/logger.js';
 import { PrismaClient } from '@prisma/client';
+
+// Импорты роутов ДОЛЖНЫ БЫТЬ ЗДЕСЬ
+import authRoutes from './routes/auth.js';
+import vehicleRoutes from './routes/vehicles.js';
+import inspectionRoutes from './routes/inspections.js';
 import vehicleActRoutes from './routes/vehicleActs.js';
+import dictionariesRoutes from './routes/dictionaries.js';
+import carBrandsRoutes from './routes/carBrands.js';
 
 // Конфигурация
 dotenv.config();
@@ -21,9 +20,10 @@ const PORT = process.env.PORT || 5000;
 
 // Инициализация Prisma Client
 export const prisma = new PrismaClient();
+
 // Middleware
 app.use(cors({
-  origin: 'http://localhost:3000', // URL вашего React-приложения
+  origin: 'http://localhost:3000',
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
@@ -31,19 +31,25 @@ app.use(cors({
 app.use(express.json());
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-// Static files middleware - ДОБАВЬТЕ ЭТУ СТРОКУ
+// Static files
 app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
 
-// Import routes
-import authRoutes from './routes/auth.js';
-import vehicleRoutes from './routes/vehicles.js';
-import inspectionRoutes from './routes/inspections.js'; // ← Должен быть этот импорт
-
-// Use routes
+// Use routes - ПОДКЛЮЧАЕМ ВСЕ РОУТЫ
 app.use('/api/auth', authRoutes);
 app.use('/api/vehicles', vehicleRoutes);
-app.use('/api/inspections', inspectionRoutes); // ← И это использование
+app.use('/api/inspections', inspectionRoutes);
 app.use('/vehicle-acts', vehicleActRoutes);
+app.use('/api/dictionaries', dictionariesRoutes);
+app.use('/api/car-brands', carBrandsRoutes);
+
+// ✅ ТЕПЕРЬ выводим список всех загруженных роутов
+console.log('Routes loaded:');
+console.log('- /api/auth');
+console.log('- /api/vehicles'); 
+console.log('- /api/inspections');
+console.log('- /vehicle-acts');
+console.log('- /api/dictionaries');
+console.log('- /api/car-brands');
 
 // ... остальной код
 // Routes

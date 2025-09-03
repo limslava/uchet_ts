@@ -55,6 +55,8 @@ export default function ReceivePage() {
   const [carModels, setCarModels] = useState([]);
   const fileInputRef = useRef(null);
   const navigate = useNavigate();
+  const [directions, setDirections] = useState([]);
+  const [transportMethods, setTransportMethods] = useState([]);
 
   const currentVin = watch('vin');
 
@@ -129,6 +131,31 @@ const handleBrandChange = async (brandId) => {
     console.error('Ошибка загрузки моделей:', error);
   }
 };
+
+useEffect(() => {
+  const loadDictionaries = async () => {
+    try {
+      console.log('Загрузка справочников...');
+      
+      const [dirsResponse, methodsResponse, brandsResponse] = await Promise.all([
+        axios.get(`${API_URL}/api/dictionaries/directions`),
+        axios.get(`${API_URL}/api/dictionaries/transport-methods`),
+        axios.get(`${API_URL}/api/car-brands`)
+      ]);
+      
+      console.log('Направления:', dirsResponse.data);
+      console.log('Способы перевозки:', methodsResponse.data);
+      console.log('Марки:', brandsResponse.data);
+      
+      setDirections(dirsResponse.data);
+      setTransportMethods(methodsResponse.data);
+      setCarBrands(brandsResponse.data);
+    } catch (error) {
+      console.error('Ошибка загрузки справочников:', error);
+    }
+  };
+  loadDictionaries();
+}, []);
 
   const checkVinExists = async (vin) => {
     try {
@@ -336,12 +363,24 @@ const handleBrandChange = async (brandId) => {
         </div>
 
         <div className="form-group">
-          <input {...register('direction')} placeholder="Направление" className="form-input" disabled={formSubmitted} />
-        </div>
+  <label>Направление</label>
+  <select {...register('directionId')} className="form-select" disabled={formSubmitted}>
+    <option value="">Выберите направление</option>
+    {directions.map(dir => (
+      <option key={dir.id} value={dir.id}>{dir.name}</option>
+    ))}
+  </select>
+</div>
 
-        <div className="form-group">
-          <input {...register('transportMethod')} placeholder="Способ перевозки" className="form-input" disabled={formSubmitted} />
-        </div>
+<div className="form-group">
+  <label>Способ перевозки</label>
+  <select {...register('transportMethodId')} className="form-select" disabled={formSubmitted}>
+    <option value="">Выберите способ перевозки</option>
+    {transportMethods.map(method => (
+      <option key={method.id} value={method.id}>{method.name}</option>
+    ))}
+  </select>
+</div>
 
         <div className="form-group">
           <input {...register('vin')} placeholder="VIN*" required className="form-input" disabled={formSubmitted} />
