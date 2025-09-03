@@ -19,7 +19,7 @@ model User {
 
   createdInspections Inspection[] @relation("InspectionsCreatedBy")
   assignedInspections Inspection[] @relation("InspectionsAssignedTo")
-  vehicleActs        VehicleAct[] // Добавляем обратное отношение
+  vehicleActs        VehicleAct[]
 
   @@map("users")
 }
@@ -30,6 +30,7 @@ model CarBrand {
   createdAt DateTime @default(now())
 
   models    CarModel[]
+  vehicleActs VehicleAct[] // Добавляем отношение к VehicleAct
 
   @@map("car_brands")
 }
@@ -43,6 +44,7 @@ model CarModel {
   brand     CarBrand @relation(fields: [brandId], references: [id], onDelete: Cascade)
 
   vehicles  Vehicle[]
+  vehicleActs VehicleAct[] // Добавляем отношение к VehicleAct
 
   @@map("car_models")
   @@unique([brandId, name])
@@ -114,7 +116,7 @@ model InspectionDamage {
   @@map("inspection_damages")
 }
 
-// Добавляем новые enum'ы
+// Enum'ы
 enum InspectionTime {
   DAY
   NIGHT
@@ -149,7 +151,10 @@ model VehicleAct {
   transportMethod         String?
   vin                     String          @unique
   licensePlate            String
-  makeModel               String
+  carBrandId              Int? // Меняем String? на Int? для соответствия с CarBrand.id
+  carBrand                CarBrand?       @relation(fields: [carBrandId], references: [id], onDelete: SetNull)
+  carModelId              Int? // Меняем String? на Int? для соответствия с CarModel.id
+  carModel                CarModel?       @relation(fields: [carModelId], references: [id], onDelete: SetNull)
   color                   String
   year                    Int
   fuelLevel               FuelLevel
@@ -162,7 +167,7 @@ model VehicleAct {
   photos                  Photo[]
   createdAt               DateTime        @default(now())
   updatedAt               DateTime        @updatedAt
-  userId                  Int? // Меняем String? на Int? для соответствия с User.id
+  userId                  Int?
   user                    User?           @relation(fields: [userId], references: [id], onDelete: SetNull)
 
   @@map("vehicle_acts")
