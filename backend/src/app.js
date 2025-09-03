@@ -9,6 +9,7 @@ console.log('- /vehicle-acts'); // Добавьте эту строку
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import path from 'path'; // ✅ ДОБАВЬТЕ ЭТОТ ИМПОРТ
 import { logger } from './config/logger.js';
 import { PrismaClient } from '@prisma/client';
 import vehicleActRoutes from './routes/vehicleActs.js';
@@ -20,23 +21,18 @@ const PORT = process.env.PORT || 5000;
 
 // Инициализация Prisma Client
 export const prisma = new PrismaClient();
-
-app.use(express.json({ limit: '10mb' }));
+// Middleware
+app.use(cors({
+  origin: 'http://localhost:3000', // URL вашего React-приложения
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
+app.use(express.json());
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-// Middleware
-app.use(cors());
-app.use(express.json());
-app.use((req, res, next) => {
-  res.setHeader('Content-Type', 'application/json; charset=utf-8');
-  next();
-});
-
-// Basic request logging middleware
-app.use((req, res, next) => {
-  logger.info(`${req.method} ${req.path}`);
-  next();
-});
+// Static files middleware - ДОБАВЬТЕ ЭТУ СТРОКУ
+app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
 
 // Import routes
 import authRoutes from './routes/auth.js';
@@ -75,8 +71,13 @@ app.get('/api/test-db', async (req, res) => {
 });
 
 // Start server
+app.use((req, res, next) => {
+  logger.info(`${req.method} ${req.path}`);
+  next();
+});
 app.listen(PORT, () => {
   logger.info(`Server is running on port ${PORT}`);
+  console.log(`Server is running on http://localhost:${PORT}`);
 });
 
 // Graceful shutdown

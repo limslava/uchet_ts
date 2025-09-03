@@ -46,9 +46,9 @@ const generateContractNumber = async () => {
 router.post('/', authenticateToken, (req, res, next) => {
   // Сначала обрабатываем multipart форму
   upload.array('photos', 10)(req, res, (err) => {
-    if (err) {
-      return res.status(400).json({ error: 'Ошибка загрузки файлов: ' + err.message });
-    }
+if (!makeModel) {
+  return res.status(400).json({ error: 'Поле makeModel обязательно' });
+}
     next();
   });
 }, async (req, res) => {
