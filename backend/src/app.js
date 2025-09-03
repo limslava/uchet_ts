@@ -1,16 +1,17 @@
 console.log('JWT_SECRET:', process.env.JWT_SECRET ? 'SET' : 'NOT SET');
 console.log('DATABASE_URL:', process.env.DATABASE_URL ? 'SET' : 'NOT SET');
+console.log('Routes loaded:');
+console.log('- /api/auth');
+console.log('- /api/vehicles'); 
+console.log('- /api/inspections');
+console.log('- /vehicle-acts'); // Добавьте эту строку
 
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import { logger } from './config/logger.js';
 import { PrismaClient } from '@prisma/client';
-
-console.log('Routes loaded:');
-console.log('- /api/auth');
-console.log('- /api/vehicles'); 
-console.log('- /api/inspections');
+import vehicleActRoutes from './routes/vehicleActs.js';
 
 // Конфигурация
 dotenv.config();
@@ -46,6 +47,7 @@ import inspectionRoutes from './routes/inspections.js'; // ← Должен бы
 app.use('/api/auth', authRoutes);
 app.use('/api/vehicles', vehicleRoutes);
 app.use('/api/inspections', inspectionRoutes); // ← И это использование
+app.use('/vehicle-acts', vehicleActRoutes);
 
 // ... остальной код
 // Routes

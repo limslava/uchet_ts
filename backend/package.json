@@ -20,13 +20,19 @@
   "author": "limslava",
   "license": "ISC",
   "dependencies": {
+    "@nestjs/platform-express": "^11.1.6",
     "@prisma/client": "^6.15.0",
+    "@types/multer": "^2.0.0",
     "bcryptjs": "^3.0.2",
     "cors": "^2.8.5",
+    "docx": "^9.5.1",
     "dotenv": "^16.4.1",
     "express": "^4.19.2",
     "express-rate-limit": "^7.1.5",
     "jsonwebtoken": "^9.0.2",
+    "multer": "^2.0.2",
+    "pdfkit": "^0.17.2",
+    "qrcode": "^1.5.4",
     "winston": "^3.12.0"
   },
   "devDependencies": {
