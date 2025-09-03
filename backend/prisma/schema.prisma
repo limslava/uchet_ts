@@ -1,0 +1,134 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  email     String   @unique
+  password  String
+  name      String?
+  role      UserRole @default(RECEIVER)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  createdInspections Inspection[] @relation("InspectionsCreatedBy")
+  assignedInspections Inspection[] @relation("InspectionsAssignedTo")
+
+  @@map("users")
+}
+
+model CarBrand {
+  id        Int      @id @default(autoincrement())
+  name      String   @unique
+  createdAt DateTime @default(now())
+
+  models    CarModel[]
+
+  @@map("car_brands")
+}
+
+model CarModel {
+  id        Int      @id @default(autoincrement())
+  name      String
+  createdAt DateTime @default(now())
+
+  brandId   Int
+  brand     CarBrand @relation(fields: [brandId], references: [id], onDelete: Cascade)
+
+  vehicles  Vehicle[]
+
+  @@map("car_models")
+  @@unique([brandId, name])
+}
+
+model Vehicle {
+  id          Int      @id @default(autoincrement())
+  vin         String   @unique
+  licensePlate String?
+  year        Int?
+  color       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  modelId     Int
+  model       CarModel @relation(fields: [modelId], references: [id], onDelete: Cascade)
+
+  inspections Inspection[]
+
+  @@map("vehicles")
+}
+
+model Inspection {
+  id          Int      @id @default(autoincrement())
+  status      InspectionStatus @default(PENDING)
+  notes       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  vehicleId   Int
+  vehicle     Vehicle @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+
+  createdById Int
+  createdBy   User @relation("InspectionsCreatedBy", fields: [createdById], references: [id], onDelete: Cascade)
+
+  assignedToId Int?
+  assignedTo   User? @relation("InspectionsAssignedTo", fields: [assignedToId], references: [id], onDelete: SetNull)
+
+  damages     InspectionDamage[]
+
+  @@map("inspections")
+}
+
+model DamageType {
+  id          Int      @id @default(autoincrement())
+  name        String   @unique
+  description String?
+  severity    SeverityLevel @default(MINOR)
+  createdAt   DateTime @default(now())
+
+  damages     InspectionDamage[]
+
+  @@map("damage_types")
+}
+
+model InspectionDamage {
+  id            Int      @id @default(autoincrement())
+  description   String?
+  photoUrl      String?
+  coordinates   String?
+  createdAt     DateTime @default(now())
+
+  inspectionId  Int
+  inspection    Inspection @relation(fields: [inspectionId], references: [id], onDelete: Cascade)
+
+  damageTypeId  Int
+  damageType    DamageType @relation(fields: [damageTypeId], references: [id], onDelete: Cascade)
+
+  @@map("inspection_damages")
+}
+
+enum UserRole {
+  ADMIN
+  MANAGER
+  RECEIVER
+}
+
+enum InspectionStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+enum SeverityLevel {
+  MINOR
+  MODERATE
+  SEVERE
+  CRITICAL
+}
