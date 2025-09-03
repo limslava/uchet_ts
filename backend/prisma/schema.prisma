@@ -184,6 +184,7 @@ model VehicleAct {
   internalContents        String?
   inspectionTime          InspectionTime
   externalCondition       ExternalCondition
+  interiorCondition       String   @default("CLEAN")
   paintInspectionImpossible Boolean        @default(false)
   equipment               Json
   status                  String          @default("NEW")

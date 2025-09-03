@@ -37,8 +37,6 @@ const EQUIPMENT_ITEMS = [
 const INSPECTION_TIMES = ['день', 'темное время суток', 'дождь', 'снег'];
 const EXTERNAL_CONDITIONS = ['Чистый', 'грязный', 'мокрый', 'в пыли', 'в снегу', 'обледенелый'];
 
-
-
 export default function ReceivePage() {
   const { register, handleSubmit, reset, setValue, watch } = useForm();
   const [photos, setPhotos] = useState([]);
@@ -57,7 +55,8 @@ export default function ReceivePage() {
   const navigate = useNavigate();
   const [directions, setDirections] = useState([]);
   const [transportMethods, setTransportMethods] = useState([]);
-
+  const [showPrintButtons, setShowPrintButtons] = useState(false);
+  const [currentActId, setCurrentActId] = useState(null);
   const currentVin = watch('vin');
 
   // Авторизация при загрузке
@@ -75,6 +74,32 @@ export default function ReceivePage() {
       }
     };
     login();
+  }, []);
+
+  // Загрузка справочников
+  useEffect(() => {
+    const loadDictionaries = async () => {
+      try {
+        console.log('Загрузка справочников...');
+        
+        const [dirsResponse, methodsResponse, brandsResponse] = await Promise.all([
+          axios.get(`${API_URL}/api/dictionaries/directions`),
+          axios.get(`${API_URL}/api/dictionaries/transport-methods`),
+          axios.get(`${API_URL}/api/car-brands`)
+        ]);
+        
+        console.log('Направления:', dirsResponse.data);
+        console.log('Способы перевозки:', methodsResponse.data);
+        console.log('Марки:', brandsResponse.data);
+        
+        setDirections(dirsResponse.data);
+        setTransportMethods(methodsResponse.data);
+        setCarBrands(brandsResponse.data);
+      } catch (error) {
+        console.error('Ошибка загрузки справочников:', error);
+      }
+    };
+    loadDictionaries();
   }, []);
 
   // Устанавливаем текущую дату
@@ -110,52 +135,109 @@ export default function ReceivePage() {
     }
     return null;
   };
-useEffect(() => {
-  const loadCarBrands = async () => {
+
+  const handleBrandChange = async (brandId) => {
     try {
-      const response = await axios.get(`${API_URL}/api/car-brands`);
-      setCarBrands(response.data);
+      const response = await axios.get(`${API_URL}/api/car-brands/${brandId}/models`);
+      setCarModels(response.data);
+      setValue('carModelId', ''); // Сбрасываем выбор модели
     } catch (error) {
-      console.error('Ошибка загрузки марок:', error);
+      console.error('Ошибка загрузки моделей:', error);
     }
   };
-  loadCarBrands();
-}, []);
 
-const handleBrandChange = async (brandId) => {
-  try {
-    const response = await axios.get(`${API_URL}/api/car-brands/${brandId}/models`);
-    setCarModels(response.data);
-    setValue('carModelId', ''); // Сбрасываем выбор модели
-  } catch (error) {
-    console.error('Ошибка загрузки моделей:', error);
-  }
+const handlePrintQR = () => {
+  if (!qr) return;
+  
+  // Создаем окно только с QR-кодом
+  const printWindow = window.open('', '_blank');
+  
+  // HTML только с QR-кодом (без текста)
+  printWindow.document.write(`
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <title>QR-код</title>
+      <style>
+        body { 
+          margin: 0; 
+          padding: 0; 
+          display: flex; 
+          justify-content: center; 
+          align-items: center; 
+          min-height: 100vh; 
+          background: white; 
+        }
+        .qr-container { 
+          text-align: center; 
+        }
+        .qr-code { 
+          margin: 0 auto; 
+        }
+        @media print {
+          body { padding: 0; margin: 0; }
+          .qr-container { 
+            width: 100vw; 
+            height: 100vh; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+          }
+        }
+        @page { 
+          margin: 0; 
+          size: auto; 
+        }
+      </style>
+    </head>
+    <body>
+      <div class="qr-container">
+        <div class="qr-code">
+          <img src="${document.querySelector('#qrcode-section canvas').toDataURL('image/png')}" 
+               alt="QR Code" 
+               style="width: 200px; height: 200px;">
+        </div>
+      </div>
+      <script>
+        window.onload = function() {
+          window.focus();
+          window.print();
+        }
+      </script>
+    </body>
+    </html>
+  `);
+  
+  printWindow.document.close();
 };
 
-useEffect(() => {
-  const loadDictionaries = async () => {
-    try {
-      console.log('Загрузка справочников...');
-      
-      const [dirsResponse, methodsResponse, brandsResponse] = await Promise.all([
-        axios.get(`${API_URL}/api/dictionaries/directions`),
-        axios.get(`${API_URL}/api/dictionaries/transport-methods`),
-        axios.get(`${API_URL}/api/car-brands`)
-      ]);
-      
-      console.log('Направления:', dirsResponse.data);
-      console.log('Способы перевозки:', methodsResponse.data);
-      console.log('Марки:', brandsResponse.data);
-      
-      setDirections(dirsResponse.data);
-      setTransportMethods(methodsResponse.data);
-      setCarBrands(brandsResponse.data);
-    } catch (error) {
-      console.error('Ошибка загрузки справочников:', error);
-    }
-  };
-  loadDictionaries();
-}, []);
+  const handlePrintAct = async () => {
+  if (!currentActId) return;
+  try {
+    // Открываем новое окно с URL печати
+    const printWindow = window.open('', '_blank');
+    
+    // Загружаем HTML контент с авторизацией
+    const response = await axios.get(`${API_URL}/vehicle-acts/${currentActId}/print`, {
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    });
+    
+    // Вставляем полученный HTML в новое окно
+    printWindow.document.write(response.data);
+    printWindow.document.close();
+    
+    // Автоматическая печать после загрузки
+    printWindow.onload = function() {
+      printWindow.print();
+    };
+    
+  } catch (error) {
+    console.error('Ошибка при печати акта:', error);
+    alert('Не удалось загрузить акт для печати');
+  }
+};
 
   const checkVinExists = async (vin) => {
     try {
@@ -223,17 +305,18 @@ useEffect(() => {
         date: String(formData.date || new Date().toISOString().split('T')[0]),
         principal: String(formData.principal || ''),
         sender: String(formData.sender || ''),
-        direction: String(formData.direction || ''),
-        transportMethod: String(formData.transportMethod || ''),
+        directionId: String(formData.directionId || ''),
+        transportMethodId: String(formData.transportMethodId || ''),
         vin: String(formData.vin || ''),
         licensePlate: String(formData.licensePlate || ''),
-        carBrandId: String(formData.carBrandId || ''), // Добавляем
-        carModelId: String(formData.carModelId || ''), // Добавляем
+        carBrandId: String(formData.carBrandId || ''),
+        carModelId: String(formData.carModelId || ''),
         color: String(formData.color || ''),
         year: parseInt(formData.year || '2020', 10),
         equipment: formData.equipment || {},
         inspectionTime: String(formData.inspection?.time || 'день'),
         externalCondition: String(formData.externalCondition || 'Чистый'),
+        interiorCondition: String(formData.interiorCondition || 'Чистый'),
         paintInspectionImpossible: Boolean(formData.paintInspectionImpossible),
         internalContents: String(formData.internalContents || ''),
         fuelLevel: String(formData.fuelLevel || '0%')
@@ -261,8 +344,8 @@ useEffect(() => {
       multipartData.append('date', submittedData.date);
       multipartData.append('principal', submittedData.principal);
       multipartData.append('sender', submittedData.sender);
-      multipartData.append('direction', submittedData.direction);
-      multipartData.append('transportMethod', submittedData.transportMethod);
+      multipartData.append('directionId', submittedData.directionId);
+      multipartData.append('transportMethodId', submittedData.transportMethodId);
       multipartData.append('vin', submittedData.vin);
       multipartData.append('licensePlate', submittedData.licensePlate);
       multipartData.append('carBrandId', submittedData.carBrandId);
@@ -288,6 +371,8 @@ useEffect(() => {
         timeout: 10000,
       });
       
+      setCurrentActId(response.data.id);
+      setShowPrintButtons(true);
       setQr(response.data.id);
       setPhotos([]);
       setShowTransferDialog(false);
@@ -328,6 +413,8 @@ useEffect(() => {
     setFormSubmitted(false);
     setShowNewInspectionDialog(false);
     setVinError(null);
+    setShowPrintButtons(false);
+    setCurrentActId(null);
   };
 
   const handleNewInspectionCancel = () => {
@@ -340,6 +427,10 @@ useEffect(() => {
 
   const handleBack = () => {
     navigate('/');
+  };
+
+  const handleCreateNew = () => {
+    promptNewInspection();
   };
 
   return (
@@ -363,24 +454,24 @@ useEffect(() => {
         </div>
 
         <div className="form-group">
-  <label>Направление</label>
-  <select {...register('directionId')} className="form-select" disabled={formSubmitted}>
-    <option value="">Выберите направление</option>
-    {directions.map(dir => (
-      <option key={dir.id} value={dir.id}>{dir.name}</option>
-    ))}
-  </select>
-</div>
+          <label>Направление</label>
+          <select {...register('directionId')} className="form-select" disabled={formSubmitted}>
+            <option value="">Выберите направление</option>
+            {directions.map(dir => (
+              <option key={dir.id} value={dir.id}>{dir.name}</option>
+            ))}
+          </select>
+        </div>
 
-<div className="form-group">
-  <label>Способ перевозки</label>
-  <select {...register('transportMethodId')} className="form-select" disabled={formSubmitted}>
-    <option value="">Выберите способ перевозки</option>
-    {transportMethods.map(method => (
-      <option key={method.id} value={method.id}>{method.name}</option>
-    ))}
-  </select>
-</div>
+        <div className="form-group">
+          <label>Способ перевозки</label>
+          <select {...register('transportMethodId')} className="form-select" disabled={formSubmitted}>
+            <option value="">Выберите способ перевозки</option>
+            {transportMethods.map(method => (
+              <option key={method.id} value={method.id}>{method.name}</option>
+            ))}
+          </select>
+        </div>
 
         <div className="form-group">
           <input {...register('vin')} placeholder="VIN*" required className="form-input" disabled={formSubmitted} />
@@ -391,34 +482,34 @@ useEffect(() => {
           <input {...register('licensePlate')} placeholder="Гос. номер*" required className="form-input" disabled={formSubmitted} />
         </div>
 
-<div className="form-group">
-  <label>Марка*</label>
-  <select 
-    {...register('carBrandId', { required: true })} 
-    onChange={(e) => handleBrandChange(e.target.value)}
-    className="form-select"
-    disabled={formSubmitted}
-  >
-    <option value="">Выберите марку</option>
-    {carBrands.map(brand => (
-      <option key={brand.id} value={brand.id}>{brand.name}</option>
-    ))}
-  </select>
-</div>
+        <div className="form-group">
+          <label>Марка*</label>
+          <select 
+            {...register('carBrandId', { required: true })} 
+            onChange={(e) => handleBrandChange(e.target.value)}
+            className="form-select"
+            disabled={formSubmitted}
+          >
+            <option value="">Выберите марку</option>
+            {carBrands.map(brand => (
+              <option key={brand.id} value={brand.id}>{brand.name}</option>
+            ))}
+          </select>
+        </div>
 
-<div className="form-group">
-  <label>Модель*</label>
-  <select 
-    {...register('carModelId', { required: true })} 
-    className="form-select"
-    disabled={formSubmitted || !carModels.length}
-  >
-    <option value="">Выберите модель</option>
-    {carModels.map(model => (
-      <option key={model.id} value={model.id}>{model.name}</option>
-    ))}
-  </select>
-</div>
+        <div className="form-group">
+          <label>Модель*</label>
+          <select 
+            {...register('carModelId', { required: true })} 
+            className="form-select"
+            disabled={formSubmitted || !carModels.length}
+          >
+            <option value="">Выберите модель</option>
+            {carModels.map(model => (
+              <option key={model.id} value={model.id}>{model.name}</option>
+            ))}
+          </select>
+        </div>
 
         <div className="form-group">
           <input {...register('color')} placeholder="Цвет*" required className="form-input" disabled={formSubmitted} />
@@ -473,6 +564,15 @@ useEffect(() => {
             ))}
           </select>
         </div>
+
+<div className="form-group">
+  <label>Состояние салона автомобиля</label>
+  <select {...register('interiorCondition')} className="form-select" defaultValue="Чистый" disabled={formSubmitted}>
+    <option value="Чистый">Чистый</option>
+    <option value="Грязный">Грязный</option>
+    <option value="Поврежден">Поврежден</option>
+  </select>
+</div>
 
         <div className="form-group">
           <label>Внутренние вложения</label>
@@ -559,7 +659,7 @@ useEffect(() => {
       )}
 
       {qr && (
-        <div className="qr-section">
+        <div className="qr-section" id="qrcode-section">
           <div className="success-message">
             <h3>Акт успешно создан!</h3>
             <p>ID: {qr}</p>
@@ -567,8 +667,19 @@ useEffect(() => {
           
           <QRCodeCanvas value={`${API_URL}/vehicle-acts/${qr}`} size={200} />
           
+          {showPrintButtons && (
+            <div className="print-buttons">
+              <button type="button" onClick={handlePrintQR} className="print-btn">
+                Распечатать QR код
+              </button>
+              <button type="button" onClick={handlePrintAct} className="print-btn">
+                Распечатать акт
+              </button>
+            </div>
+          )}
+          
           <div className="qr-buttons">
-            <button type="button" onClick={promptNewInspection} className="qr-btn">
+            <button type="button" onClick={handleCreateNew} className="qr-btn">
               Создать новый осмотр
             </button>
             <button type="button" onClick={handleBack} className="qr-btn">
