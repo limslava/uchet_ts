@@ -469,6 +469,7 @@ const generatePrintableHtml = (act) => {
             margin-top: 3px;
             padding-top: 2px;
             font-size: 10px;
+            width: 800px;
         }
         .signature-label {
             text-align: center;
@@ -498,7 +499,7 @@ const generatePrintableHtml = (act) => {
         .qr-container {
             position: absolute;
             top: 10px;
-            left: 00px;
+            left: 5px;
             z-index: 100;
         }
         .qr-code {
@@ -511,6 +512,7 @@ const generatePrintableHtml = (act) => {
         
         .main-content {
             margin-left: 0px; /* Отступ для QR кода */
+            margin-top: 60px;
         }
         
         @media print {
@@ -540,17 +542,18 @@ const generatePrintableHtml = (act) => {
         </div>
     </div>
 
-    <div class="main-content">
+    <div class=".company-info">
         <div class="company-info">
             ООО «Симпл Вэй» ОГРН: 122250000047. ИНН: 2543164502. КПП: 254301001<br>
             690108 г. Владивосток, Вилкова, 5А
         </div>
-
+        <br><br><br><br><br>
         <div class="header">
             <h1>АКТ ПРИЕМА-ПЕРЕДАЧИ</h1>
+            <br>
             <h2>К Договору № ${act.contractNumber || ''}</h2>
         </div>
-
+        <br>
         <table>
             <tr>
                 <th>Принципал/Получатель</th>
@@ -593,7 +596,7 @@ const generatePrintableHtml = (act) => {
                 <td></td>
             </tr>
         </table>
-
+        <br>
         <div class="section-title">Комплектность:</div>
         <div class="equipment-grid">
             ${Object.entries(act.equipment || {}).map(([key, value]) => `
@@ -602,9 +605,8 @@ const generatePrintableHtml = (act) => {
                 </div>
             `).join('')}
         </div>
-
+        <br>
         <div class="section-title">Уровень топлива: ${act.fuelLevel || '0%'}</div>
-
         <!-- НОВАЯ СЕТКА: две колонки -->
         <div class="condition-grid">
             <div class="condition-column">
@@ -629,43 +631,46 @@ const generatePrintableHtml = (act) => {
                 <div>${act.photos?.length || 0} фотографий</div>
             </div>
         </div>
-
+        <br><br>
         <div class="signatures">
             <!-- Убраны длинные полосы над подписями, добавлены под -->
             <div class="signature-item">
-                <div>Ознакомлен: _________________________</div>
+                <div>Ознакомлен: <div>
+                <div class="signature-line"></div>
+                <div class="signature-label">подпись, ФИО</div>
+            </div>
+            <br>
+            <div class="signature-item">
+                <div>Прочее: </div>
+                <div class="signature-line"></div>
+            </div>
+            <br>
+            <div class="signature-item">
+                <div>Передал: </div>
                 <div class="signature-line"></div>
                 <div class="signature-label">подпись, ФИО</div>
             </div>
             
             <div class="signature-item">
-                <div>Прочее: _____________________________</div>
-                <div class="signature-line"></div>
-            </div>
-            
-            <div class="signature-item">
-                <div>Передал: ____________________________</div>
-                <div class="signature-line"></div>
-                <div class="signature-label">подпись, ФИО</div>
-            </div>
-            
-            <div class="signature-item">
-                <div>Принял: _____________________________</div>
+                <div>Принял: </div>
                 <div class="signature-line"></div>
                 <div class="signature-label">подпись, ФИО</div>
             </div>
             
             <div class="signature-item">
                 <div class="section-title">Отметка Грузополучателя:</div>
+                <br>
                 <div>Автомобиль получил, претензий к перевозке не имею.</div>
+                <br>
                 <div class="signature-line"></div>
                 <div class="signature-label">подпись, ФИО</div>
                 <div style="text-align: right; margin-top: 3px;">
+                <br><br>
                     «_______»_______________ 20____ г.
                 </div>
             </div>
         </div>
-
+        <br><br><br><br>
         <div class="footer">
             <div class="footer-note">
                 *Автомобиль принят без тщательного осмотра, без мойки. При получении автомобиля клиент обязуется не предъявлять претензии по внешним повреждениям, которые не могли быть обнаружены при передаче.
