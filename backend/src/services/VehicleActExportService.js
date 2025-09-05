@@ -6,25 +6,26 @@ export class VehicleActExportService {
   async generateDocx(act) {
     try {
       const { 
-        contractNumber, 
-        date, 
-        principal, 
-        sender, 
-        direction,
-        licensePlate, 
-        makeModel, 
-        vin, 
-        color, 
-        year,
-        equipment,
-        fuelLevel,
-        internalContents,
-        inspectionTime,
-        externalCondition,
-        paintInspectionImpossible,
-        photos,
-        transportMethod
-      } = act;
+  contractNumber, 
+  date, 
+  principal, 
+  sender, 
+  direction,
+  licensePlate, 
+  makeModel, 
+  vin, 
+  color, 
+  year,
+  equipment,
+  fuelLevel,
+  internalContents,
+  inspectionTime,
+  externalCondition,
+  interiorCondition, // ← ДОБАВИТЬ
+  paintInspectionImpossible,
+  photos,
+  transportMethod
+} = act;
 
       const formattedDate = new Date(date).toLocaleDateString('ru-RU');
       const shortContractNumber = contractNumber ? contractNumber.slice(-2) : '';
@@ -220,6 +221,7 @@ export class VehicleActExportService {
             this.createInfoRowCompact('Осмотр ЛКП невозможен', paintInspectionImpossible ? 'Да' : 'Нет'),
             this.createInfoRowCompact('Карта внешнего вида', `${photos?.length || 0} шт.`),
             this.createInfoRowCompact('Состояние салона автомобиля', externalCondition || 'Чистый'),
+            this.createInfoRowCompact('Состояние салона автомобиля', interiorCondition || 'Чистый'),
             new Paragraph({ text: '' }),
 
             new Paragraph({
@@ -327,13 +329,13 @@ export class VehicleActExportService {
         }]
       });
 
-      const buffer = await Packer.toBuffer(doc);
-      return buffer;
-    } catch (error) {
-      console.error('Error generating DOCX:', error);
-      throw new Error('Не удалось сгенерировать документ');
-    }
+         const buffer = await Packer.toBuffer(doc);
+    return buffer;
+  } catch (error) {
+    console.error('Error generating DOCX:', error);
+    throw new Error('Не удалось сгенерировать документ');
   }
+}
 
   createInfoRowCompact(label, value) {
     return new Paragraph({

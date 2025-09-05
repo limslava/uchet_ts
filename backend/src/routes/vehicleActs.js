@@ -1,5 +1,5 @@
 import express from 'express';
-import { authenticateToken } from '../middleware/auth.js'; // Используем этот импорт
+import { authenticateToken } from '../middleware/auth.js';
 import { prisma } from '../app.js';
 import multer from 'multer';
 import path from 'path';
@@ -206,11 +206,11 @@ router.post('/', authenticateToken, (req, res, next) => {
     carModelId: carModelId ? parseInt(carModelId) : null,
     color,
     year: parseInt(year),
-    fuelLevel: convertFuelLevel(fuelLevel), // ← используем convertFuelLevel
+    fuelLevel: convertFuelLevel(fuelLevel),
     internalContents,
-    inspectionTime: convertInspectionTime(inspectionTime), // ← используем convertInspectionTime
-    externalCondition: convertExternalCondition(externalCondition), // ← используем convertExternalCondition
-    interiorCondition: convertInteriorCondition(interiorCondition), // ← используем convertInteriorCondition
+    inspectionTime: convertInspectionTime(inspectionTime),
+    externalCondition: convertExternalCondition(externalCondition),
+    interiorCondition: convertInteriorCondition(interiorCondition),
     paintInspectionImpossible: paintInspectionImpossible === 'true',
     equipment: JSON.parse(equipment || '{}'),
     status: 'NEW',
@@ -239,13 +239,12 @@ router.post('/', authenticateToken, (req, res, next) => {
   }
 });
 
-// Эндпоинт для экспорта акта в DOCX (ДОЛЖЕН БЫТЬ ПЕРЕД router.get('/:id'))
+// Эндпоинт для экспорта акта в DOCX
 router.get('/:id/export-docx', authenticateToken, async (req, res) => {
   try {
     const { id } = req.params;
     console.log('Export request for act ID:', id);
 
-    // 1. Найти акт в БД
     const act = await prisma.vehicleAct.findUnique({
       where: { id: id },
       include: {
@@ -270,13 +269,11 @@ router.get('/:id/export-docx', authenticateToken, async (req, res) => {
       equipment: typeof act.equipment === 'string' ? JSON.parse(act.equipment) : act.equipment || {},
       fuelLevel: convertFuelLevelToText(act.fuelLevel),
       inspectionTime: convertInspectionTimeToText(act.inspectionTime),
-      externalCondition: convertExternalConditionToText(act.externalCondition)
+      externalCondition: convertExternalConditionToText(act.externalCondition),
+      interiorCondition: convertInteriorConditionToText(act.interiorCondition)
     };
 
-    // 3. Сгенерировать документ
     const buffer = await vehicleActExportService.generateDocx(dataForExport);
-
-    // 4. Отправить файл пользователю (ИСПРАВЛЕНО - убрана кириллица)
     const filename = `act-${act.contractNumber.replace(/[^a-zA-Z0-9_-]/g, '_')}.docx`;
     
     res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
@@ -291,7 +288,6 @@ router.get('/:id/export-docx', authenticateToken, async (req, res) => {
     });
   }
 });
-
 
 // Получение всех актов
 router.get('/', authenticateToken, async (req, res) => {
@@ -322,15 +318,45 @@ router.get('/', authenticateToken, async (req, res) => {
   }
 });
 
-// Получение акта по ID (ЭТОТ МАРШРУТ ДОЛЖЕН БЫТЬ ПОСЛЕ /:id/export-docx)
-// ... (весь ваш код до эндпоинта /:id/print)
+// Получение акта по ID
+router.get('/:id', authenticateToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const act = await prisma.vehicleAct.findUnique({
+      where: { id },
+      include: {
+        photos: true,
+        user: {
+          select: {
+            id: true,
+            email: true,
+            name: true
+          }
+        },
+        carBrand: true,
+        carModel: true,
+        direction: true,
+        transportMethod: true
+      }
+    });
+
+    if (!act) {
+      return res.status(404).json({ error: 'Акт не найден' });
+    }
+
+    res.json(act);
+  } catch (error) {
+    console.error('Get vehicle act error:', error);
+    res.status(500).json({ error: 'Ошибка при получении акта' });
+  }
+});
 
 // Эндпоинт для печати HTML-версии акта
 router.get('/:id/print', authenticateToken, async (req, res) => {
   try {
     const { id } = req.params;
 
-    // Найти акт в БД
     const act = await prisma.vehicleAct.findUnique({
       where: { id: id },
       include: {
@@ -366,9 +392,7 @@ router.get('/:id/print', authenticateToken, async (req, res) => {
       formattedDate: new Date(act.date).toLocaleDateString('ru-RU')
     };
 
-    // Генерация HTML
     const htmlContent = generatePrintableHtml(dataForPrint);
-    
     res.setHeader('Content-Type', 'text/html');
     res.send(htmlContent);
 
@@ -381,7 +405,69 @@ router.get('/:id/print', authenticateToken, async (req, res) => {
   }
 });
 
-// Функция генерации HTML (ВЫНЕСЕНА НАРУЖУ, перед другими функциями)
+// Подтверждение приема ТС
+router.post('/:id/receive', authenticateToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // Проверяем, существует ли акт
+    const act = await prisma.vehicleAct.findUnique({
+      where: { id }
+    });
+
+    if (!act) {
+      return res.status(404).json({ error: 'Акт не найден' });
+    }
+
+    // Обновляем статус акта
+     const updatedAct = await prisma.vehicleAct.update({
+      where: { id },
+      data: {
+        status: 'RECEIVED',
+        receivedAt: new Date(),
+      },
+      include: {
+        photos: true,
+        user: {
+          select: {
+            id: true,
+            email: true,
+            name: true
+          }
+        },
+        carBrand: true,
+        carModel: true,
+        direction: true,
+        transportMethod: true
+      }
+    });
+
+    res.json(updatedAct);
+  } catch (error) {
+    console.error('Receive vehicle act error:', error);
+    res.status(500).json({ 
+      error: 'Ошибка при подтверждении приема ТС',
+      details: error.message 
+    });
+  }
+});
+
+// Проверка VIN
+router.get('/check-vin/:vin', authenticateToken, async (req, res) => {
+  try {
+    const { vin } = req.params;
+    const existingAct = await prisma.vehicleAct.findUnique({
+      where: { vin }
+    });
+
+    res.json({ exists: !!existingAct, act: existingAct });
+  } catch (error) {
+    console.error('Check VIN error:', error);
+    res.status(500).json({ error: 'Ошибка при проверке VIN' });
+  }
+});
+
+// Функция генерации HTML
 const generatePrintableHtml = (act) => {
   const API_URL = process.env.API_URL || 'http://localhost:5000';
   return `
@@ -407,10 +493,10 @@ const generatePrintableHtml = (act) => {
         }
         .company-info {
             text-align: right;
-            font-size: 9px;
+            font-size: 12px;
             margin-bottom: 10px;
             line-height: 1.1;
-            margin-right: 0px; /* Добавляем отступ справа для баланса */
+            margin-right: 0px;
         }
         table {
             width: 100%;
@@ -445,7 +531,6 @@ const generatePrintableHtml = (act) => {
             border-bottom: 1px solid #eee;
         }
         
-        /* НОВЫЙ СТИЛЬ: две колонки для состояний */
         .condition-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -495,24 +580,22 @@ const generatePrintableHtml = (act) => {
             margin: 2px 0;
         }
         
-        /* Стили для QR кода */
         .qr-container {
             position: absolute;
             top: 10px;
-            left: 5px;
+            left: 10px;
             z-index: 100;
         }
         .qr-code {
-            width: 50px;
-            height: 50px;
+            width: 100px;
+            height: 100px;
             border: 1px solid #ccc;
             padding: 2px;
             background: white;
         }
         
         .main-content {
-            margin-left: 0px; /* Отступ для QR кода */
-            margin-top: 60px;
+            margin-left: 0px;
         }
         
         @media print {
@@ -533,7 +616,6 @@ const generatePrintableHtml = (act) => {
     </style>
 </head>
 <body>
-    <!-- QR код в левом верхнем углу -->
     <div class="qr-container">
         <div class="qr-code">
             <img src="https://api.qrserver.com/v1/create-qr-code/?size=60x60&data=${API_URL}/vehicle-acts/${act.id}" 
@@ -547,7 +629,7 @@ const generatePrintableHtml = (act) => {
             ООО «Симпл Вэй» ОГРН: 122250000047. ИНН: 2543164502. КПП: 254301001<br>
             690108 г. Владивосток, Вилкова, 5А
         </div>
-        <br><br><br><br><br>
+<br><br><br><br>
         <div class="header">
             <h1>АКТ ПРИЕМА-ПЕРЕДАЧИ</h1>
             <br>
@@ -607,7 +689,6 @@ const generatePrintableHtml = (act) => {
         </div>
         <br>
         <div class="section-title">Уровень топлива: ${act.fuelLevel || '0%'}</div>
-        <!-- НОВАЯ СЕТКА: две колонки -->
         <div class="condition-grid">
             <div class="condition-column">
                 <div class="section-title">Перечень внутренних вложений в а/м:</div>
@@ -633,18 +714,17 @@ const generatePrintableHtml = (act) => {
         </div>
         <br><br>
         <div class="signatures">
-            <!-- Убраны длинные полосы над подписями, добавлены под -->
             <div class="signature-item">
-                <div>Ознакомлен: <div>
+                <div>Ознакомлен: </div>
                 <div class="signature-line"></div>
                 <div class="signature-label">подпись, ФИО</div>
             </div>
-            <br>
+            
             <div class="signature-item">
                 <div>Прочее: </div>
                 <div class="signature-line"></div>
             </div>
-            <br>
+            
             <div class="signature-item">
                 <div>Передал: </div>
                 <div class="signature-line"></div>
@@ -723,20 +803,5 @@ const getEquipmentLabel = (key) => {
   };
   return labels[key] || key;
 };
-
-// Проверка VIN
-router.get('/check-vin/:vin', authenticateToken, async (req, res) => {
-  try {
-    const { vin } = req.params;
-    const existingAct = await prisma.vehicleAct.findUnique({
-      where: { vin }
-    });
-
-    res.json({ exists: !!existingAct, act: existingAct });
-  } catch (error) {
-    console.error('Check VIN error:', error);
-    res.status(500).json({ error: 'Ошибка при проверке VIN' });
-  }
-});
 
 export default router;
