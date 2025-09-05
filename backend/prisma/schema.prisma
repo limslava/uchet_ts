@@ -136,6 +136,18 @@ model InspectionDamage {
 
   @@map("inspection_damages")
 }
+model ReceiverLocation {
+  id        Int      @id @default(autoincrement())
+  name      String   @unique
+  address   String
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+
+  vehicleActs VehicleAct[]
+
+  @@map("receiver_locations")
+}
+
 
 // Enum'ы
 enum InspectionTime {
@@ -184,16 +196,18 @@ model VehicleAct {
   internalContents        String?
   inspectionTime          InspectionTime
   externalCondition       ExternalCondition
-  interiorCondition       String   @default("CLEAN")
+  interiorCondition       InteriorCondition  @default(CLEAN) // вместо String
   paintInspectionImpossible Boolean        @default(false)
   equipment               Json
-  status                  String          @default("NEW")
+  status                  VehicleActStatus @default(NEW) // Оставляем только это определение
   photos                  Photo[]
   createdAt               DateTime        @default(now())
   updatedAt               DateTime        @updatedAt
   userId                  Int?
   user                    User?           @relation(fields: [userId], references: [id], onDelete: SetNull)
-
+  receiverLocationId Int?
+  receiverLocation   ReceiverLocation? @relation(fields: [receiverLocationId], references: [id], onDelete: SetNull)
+  receivedAt         DateTime?
   @@map("vehicle_acts")
 }
 
@@ -212,6 +226,12 @@ enum UserRole {
   MANAGER
   RECEIVER
 }
+enum VehicleActStatus {
+  NEW
+  RECEIVED
+  COMPLETED
+  CANCELLED
+}
 
 enum InspectionStatus {
   PENDING
@@ -225,4 +245,10 @@ enum SeverityLevel {
   MODERATE
   SEVERE
   CRITICAL
+}
+
+enum InteriorCondition {
+  CLEAN
+  DIRTY
+  DAMAGED
 }

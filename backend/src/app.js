@@ -23,7 +23,7 @@ export const prisma = new PrismaClient();
 
 // Middleware
 app.use(cors({
-  origin: 'http://localhost:3000',
+  origin: true, // ← Разрешает все домены
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']

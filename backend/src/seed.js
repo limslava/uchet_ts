@@ -10,8 +10,8 @@ async function main() {
   await prisma.inspectionDamage.deleteMany();
   await prisma.inspection.deleteMany();
   await prisma.vehicle.deleteMany();
-  await prisma.carModel.deleteMany();
-  await prisma.carBrand.deleteMany();
+  // await prisma.carModel.deleteMany();    // ← ЗАКОММЕНТИРОВАТЬ
+  // await prisma.carBrand.deleteMany();    // ← ЗАКОММЕНТИРОВАТЬ
   await prisma.user.deleteMany();
 
   // Создаем тестового пользователя-приемосдатчика
@@ -29,6 +29,8 @@ async function main() {
 
   console.log('Created test user:', user);
 
+  // ЗАКОММЕНТИРОВАТЬ весь блок создания марок и моделей ↓
+  /*
   // Создаем марки автомобилей
   const toyota = await prisma.carBrand.create({
     data: { name: 'Toyota' }
@@ -81,6 +83,8 @@ async function main() {
   });
 
   console.log('Created test inspection:', inspection);
+  */
+  // КОНЕЦ комментария ↑
 }
 
 main()
