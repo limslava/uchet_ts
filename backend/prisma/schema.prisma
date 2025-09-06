@@ -8,131 +8,117 @@ datasource db {
 }
 
 model User {
-  id        Int      @id @default(autoincrement())
-  email     String   @unique
-  password  String
-  name      String?
-  role      UserRole @default(RECEIVER)
-  isActive  Boolean  @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  createdInspections Inspection[] @relation("InspectionsCreatedBy")
+  id                  Int          @id @default(autoincrement())
+  email               String       @unique
+  password            String
+  name                String?
+  role                UserRole     @default(RECEIVER)
+  isActive            Boolean      @default(true)
+  createdAt           DateTime     @default(now())
+  updatedAt           DateTime     @updatedAt
   assignedInspections Inspection[] @relation("InspectionsAssignedTo")
-  vehicleActs        VehicleAct[]
+  createdInspections  Inspection[] @relation("InspectionsCreatedBy")
+  vehicleActs         VehicleAct[]
 
   @@map("users")
 }
-model Direction {
-  id        Int      @id @default(autoincrement())
-  name      String   @unique
-  createdAt DateTime @default(now())
-  isActive  Boolean  @default(true)
 
+model Direction {
+  id          Int          @id @default(autoincrement())
+  name        String       @unique
+  createdAt   DateTime     @default(now())
+  isActive    Boolean      @default(true)
   vehicleActs VehicleAct[]
 
   @@map("directions")
 }
 
 model TransportMethod {
-  id        Int      @id @default(autoincrement())
-  name      String   @unique
-  createdAt DateTime @default(now())
-  isActive  Boolean  @default(true)
-
+  id          Int          @id @default(autoincrement())
+  name        String       @unique
+  createdAt   DateTime     @default(now())
+  isActive    Boolean      @default(true)
   vehicleActs VehicleAct[]
 
   @@map("transport_methods")
 }
 
 model CarBrand {
-  id        Int      @id @default(autoincrement())
-  name      String   @unique
-  createdAt DateTime @default(now())
-
-  models    CarModel[]
-  vehicleActs VehicleAct[] // Добавляем отношение к VehicleAct
+  id          Int          @id @default(autoincrement())
+  name        String       @unique
+  createdAt   DateTime     @default(now())
+  models      CarModel[]
+  vehicleActs VehicleAct[]
 
   @@map("car_brands")
 }
 
 model CarModel {
-  id        Int      @id @default(autoincrement())
-  name      String
-  createdAt DateTime @default(now())
+  id          Int          @id @default(autoincrement())
+  name        String
+  createdAt   DateTime     @default(now())
+  brandId     Int
+  brand       CarBrand     @relation(fields: [brandId], references: [id], onDelete: Cascade)
+  vehicleActs VehicleAct[]
+  vehicles    Vehicle[]
 
-  brandId   Int
-  brand     CarBrand @relation(fields: [brandId], references: [id], onDelete: Cascade)
-
-  vehicles  Vehicle[]
-  vehicleActs VehicleAct[] // Добавляем отношение к VehicleAct
-
-  @@map("car_models")
   @@unique([brandId, name])
+  @@map("car_models")
 }
 
 model Vehicle {
-  id          Int      @id @default(autoincrement())
-  vin         String   @unique
+  id           Int          @id @default(autoincrement())
+  vin          String       @unique
   licensePlate String?
-  year        Int?
-  color       String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  modelId     Int
-  model       CarModel @relation(fields: [modelId], references: [id], onDelete: Cascade)
-
-  inspections Inspection[]
+  year         Int?
+  color        String?
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+  modelId      Int
+  inspections  Inspection[]
+  model        CarModel     @relation(fields: [modelId], references: [id], onDelete: Cascade)
 
   @@map("vehicles")
 }
 
 model Inspection {
-  id          Int      @id @default(autoincrement())
-  status      InspectionStatus @default(PENDING)
-  notes       String?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  vehicleId   Int
-  vehicle     Vehicle @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
-
-  createdById Int
-  createdBy   User @relation("InspectionsCreatedBy", fields: [createdById], references: [id], onDelete: Cascade)
-
+  id           Int                @id @default(autoincrement())
+  status       InspectionStatus   @default(PENDING)
+  notes        String?
+  createdAt    DateTime           @default(now())
+  updatedAt    DateTime           @updatedAt
+  vehicleId    Int
+  createdById  Int
   assignedToId Int?
-  assignedTo   User? @relation("InspectionsAssignedTo", fields: [assignedToId], references: [id], onDelete: SetNull)
-
-  damages     InspectionDamage[]
+  damages      InspectionDamage[]
+  assignedTo   User?              @relation("InspectionsAssignedTo", fields: [assignedToId], references: [id])
+  createdBy    User               @relation("InspectionsCreatedBy", fields: [createdById], references: [id], onDelete: Cascade)
+  vehicle      Vehicle            @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
 
   @@map("inspections")
 }
 
 model DamageType {
-  id          Int      @id @default(autoincrement())
-  name        String   @unique
+  id          Int                @id @default(autoincrement())
+  name        String             @unique
   description String?
-  severity    SeverityLevel @default(MINOR)
-  createdAt   DateTime @default(now())
-
+  severity    SeverityLevel      @default(MINOR)
+  createdAt   DateTime           @default(now())
   damages     InspectionDamage[]
 
   @@map("damage_types")
 }
 
 model InspectionDamage {
-  id            Int      @id @default(autoincrement())
-  description   String?
-  photoUrl      String?
-  coordinates   String?
-  createdAt     DateTime @default(now())
-
-  inspectionId  Int
-  inspection    Inspection @relation(fields: [inspectionId], references: [id], onDelete: Cascade)
-
-  damageTypeId  Int
-  damageType    DamageType @relation(fields: [damageTypeId], references: [id], onDelete: Cascade)
+  id           Int        @id @default(autoincrement())
+  description  String?
+  photoUrl     String?
+  coordinates  String?
+  createdAt    DateTime   @default(now())
+  inspectionId Int
+  damageTypeId Int
+  damageType   DamageType @relation(fields: [damageTypeId], references: [id], onDelete: Cascade)
+  inspection   Inspection @relation(fields: [inspectionId], references: [id], onDelete: Cascade)
 
   @@map("inspection_damages")
 }
@@ -148,8 +134,55 @@ model ReceiverLocation {
   @@map("receiver_locations")
 }
 
+<<<<<<< HEAD
+=======
 
-// Enum'ы
+model VehicleAct {
+  id                        String            @id @default(cuid())
+  contractNumber            String            @unique
+  date                      DateTime
+  principal                 String?
+  sender                    String?
+  vin                       String            @unique
+  licensePlate              String
+  color                     String
+  year                      Int
+  internalContents          String?
+  inspectionTime            InspectionTime
+  externalCondition         ExternalCondition
+  paintInspectionImpossible Boolean           @default(false)
+  equipment                 Json
+  status                    String            @default("NEW")
+  createdAt                 DateTime          @default(now())
+  updatedAt                 DateTime          @updatedAt
+  userId                    Int?
+  fuelLevel                 FuelLevel
+  carBrandId                Int?
+  carModelId                Int?
+  directionId               Int?
+  transportMethodId         Int?
+  interiorCondition         String            @default("CLEAN")
+  photos                    Photo[]
+  carBrand                  CarBrand?         @relation(fields: [carBrandId], references: [id])
+  carModel                  CarModel?         @relation(fields: [carModelId], references: [id])
+  direction                 Direction?        @relation(fields: [directionId], references: [id])
+  transportMethod           TransportMethod?  @relation(fields: [transportMethodId], references: [id])
+  user                      User?             @relation(fields: [userId], references: [id])
+
+  @@map("vehicle_acts")
+}
+
+model Photo {
+  id           String     @id @default(cuid())
+  filename     String
+  vehicleActId String
+  createdAt    DateTime   @default(now())
+  vehicleAct   VehicleAct @relation(fields: [vehicleActId], references: [id], onDelete: Cascade)
+
+  @@map("photos")
+}
+>>>>>>> main_repo/main
+
 enum InspectionTime {
   DAY
   NIGHT
@@ -251,4 +284,8 @@ enum InteriorCondition {
   CLEAN
   DIRTY
   DAMAGED
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> main_repo/main

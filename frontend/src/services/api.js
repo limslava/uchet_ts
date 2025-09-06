@@ -1,141 +1,106 @@
-// frontend/src/services/api.js
-import axios from 'axios';
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
-// Базовый URL API
-const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'https://localhost:5000';
-
-// Создаем экземпляр axios с настройками
-const api = axios.create({
-  baseURL: API_BASE_URL,
-  withCredentials: true,
-});
-
-// Добавляем interceptor для автоматического добавления токена
-api.interceptors.request.use((config) => {
+// Функция для выполнения запросов с авторизацией
+async function request(url, options = {}) {
   const token = localStorage.getItem('token');
+  const headers = {
+    'Content-Type': 'application/json',
+    ...options.headers,
+  };
+
   if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
+    headers['Authorization'] = `Bearer ${token}`;
   }
-  return config;
-});
 
-// Функции API
+  const response = await fetch(`${API_BASE_URL}${url}`, {
+    ...options,
+    headers,
+  });
 
-// Аутентификация
-export const login = async (email, password) => {
-  try {
-    const response = await api.post('/api/auth/login', { email, password });
-    return response.data;
-  } catch (error) {
-    throw error.response?.data || error.message;
+  // Обработка ошибки 401 (Unauthorized)
+  if (response.status === 401) {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    window.location.href = '/login';
+    throw new Error('Сессия истекла. Пожалуйста, войдите снова.');
   }
-};
 
-export const getMe = async () => {
-  try {
-    const response = await api.get('/api/auth/me');
-    return response.data;
-  } catch (error) {
-    throw error.response?.data || error.message;
+  if (!response.ok) {
+    throw new Error(`HTTP error! status: ${response.status}`);
   }
-};
 
-// Vehicle Acts
-export const createVehicleAct = async (formData) => {
-  try {
-    const response = await api.post('/vehicle-acts', formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-    });
-    return response.data;
-  } catch (error) {
-    throw error.response?.data || error.message;
-  }
-};
+  return response.json();
+}
 
-export const getVehicleActs = async () => {
-  try {
-    const response = await api.get('/vehicle-acts');
-    return response.data;
-  } catch (error) {
-    throw error.response?.data || error.message;
-  }
-};
-
+// Получить акт по ID
 export const getVehicleActById = async (id) => {
-  try {
-    const response = await api.get(`/vehicle-acts/${id}`);
-    return response.data;
-  } catch (error) {
-    throw error.response?.data || error.message;
-  }
+  return request(`/vehicle-acts/${id}`);
 };
 
-export const confirmVehicleReceipt = async (id, receiptData) => {
-  try {
-    const response = await api.post(`/vehicle-acts/${id}/receive`, receiptData);
-    return response.data;
-  } catch (error) {
-    throw error.response?.data || error.message;
-  }
+// Подтвердить прием ТС
+export const confirmVehicleReceipt = async (actId) => {
+  return request(`/vehicle-acts/${actId}/receive`, {
+    method: 'POST',
+    body: JSON.stringify({}),
+  });
 };
 
-export const checkVin = async (vin) => {
-  try {
-    const response = await api.get(`/vehicle-acts/check-vin/${vin}`);
-    return response.data;
-  } catch (error) {
-    throw error.response?.data || error.message;
+// Другие функции API
+export const login = async (email, password) => {
+  const response = await fetch(`${API_BASE_URL}/api/auth/login`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ email, password }),
+  });
+
+  if (!response.ok) {
+    throw new Error('Ошибка входа');
   }
+
+  return response.json();
 };
 
-export const exportDocx = async (id) => {
-  try {
-    const response = await api.get(`/vehicle-acts/${id}/export-docx`, {
-      responseType: 'blob',
-    });
-    return response.data;
-  } catch (error) {
-    throw error.response?.data || error.message;
-  }
-};
-
-// Справочники
 export const getCarBrands = async () => {
-  try {
-    const response = await api.get('/api/car-brands');
-    return response.data;
-  } catch (error) {
-    throw error.response?.data || error.message;
-  }
-};
-
-export const getCarModels = async (brandId) => {
-  try {
-    const response = await api.get(`/api/car-brands/${brandId}/models`);
-    return response.data;
-  } catch (error) {
-    throw error.response?.data || error.message;
-  }
+  return request('/api/car-brands');
 };
 
 export const getDirections = async () => {
-  try {
-    const response = await api.get('/api/dictionaries/directions');
-    return response.data;
-  } catch (error) {
-    throw error.response?.data || error.message;
-  }
+  return request('/api/dictionaries/directions');
 };
 
 export const getTransportMethods = async () => {
-  try {
-    const response = await api.get('/api/dictionaries/transport-methods');
-    return response.data;
-  } catch (error) {
-    throw error.response?.data || error.message;
-  }
+  return request('/api/dictionaries/transport-methods');
 };
 
-export default api;
+export const createVehicleAct = async (formData) => {
+  const token = localStorage.getItem('token');
+  
+  const response = await fetch(`${API_BASE_URL}/vehicle-acts`, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+    },
+    body: formData,
+  });
+
+  // Обработка ошибки 401 и для этого запроса
+  if (response.status === 401) {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    window.location.href = '/login';
+    throw new Error('Сессия истекла. Пожалуйста, войдите снова.');
+  }
+
+  if (!response.ok) {
+    throw new Error('Failed to create vehicle act');
+  }
+
+  return response.json();
+};
+
+// Добавим функцию для получения информации о текущем пользователе
+export const getCurrentUser = async () => {
+  return request('/api/auth/me');
+};
