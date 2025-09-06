@@ -37,6 +37,16 @@ const EQUIPMENT_ITEMS = [
 const INSPECTION_TIMES = ['день', 'темное время суток', 'дождь', 'снег'];
 const EXTERNAL_CONDITIONS = ['Чистый', 'грязный', 'мокрый', 'в пыли', 'в снегу', 'обледенелый'];
 
+// Создайте instance axios с токеном по умолчанию
+const createApiInstance = (token) => {
+  return axios.create({
+    baseURL: API_URL,
+    headers: {
+      'Authorization': `Bearer ${token}`
+    }
+  });
+};
+
 export default function ReceivePage() {
   const { register, handleSubmit, reset, setValue, watch } = useForm();
   const [photos, setPhotos] = useState([]);
@@ -57,7 +67,13 @@ export default function ReceivePage() {
   const [transportMethods, setTransportMethods] = useState([]);
   const [showPrintButtons, setShowPrintButtons] = useState(false);
   const [currentActId, setCurrentActId] = useState(null);
+  const [validationErrors, setValidationErrors] = useState({});
   const currentVin = watch('vin');
+
+  // Отслеживание ошибок валидации для отладки
+  useEffect(() => {
+    console.log('Validation errors:', validationErrors);
+  }, [validationErrors]);
 
   // Авторизация при загрузке
   useEffect(() => {
@@ -82,10 +98,11 @@ export default function ReceivePage() {
       try {
         console.log('Загрузка справочников...');
         
+        const api = createApiInstance(token);
         const [dirsResponse, methodsResponse, brandsResponse] = await Promise.all([
-          axios.get(`${API_URL}/api/dictionaries/directions`),
-          axios.get(`${API_URL}/api/dictionaries/transport-methods`),
-          axios.get(`${API_URL}/api/car-brands`)
+          api.get('/api/dictionaries/directions'),
+          api.get('/api/dictionaries/transport-methods'),
+          api.get('/api/car-brands')
         ]);
         
         console.log('Направления:', dirsResponse.data);
@@ -99,8 +116,11 @@ export default function ReceivePage() {
         console.error('Ошибка загрузки справочников:', error);
       }
     };
-    loadDictionaries();
-  }, []);
+    
+    if (token) {
+      loadDictionaries();
+    }
+  }, [token]);
 
   // Устанавливаем текущую дату
   useEffect(() => {
@@ -117,6 +137,14 @@ export default function ReceivePage() {
       setVinError(null);
     }
   }, [currentVin]);
+
+  // Отслеживание изменений формы для отладки
+  useEffect(() => {
+    const subscription = watch((value, { name, type }) => {
+      console.log('Form values changed:', value);
+    });
+    return () => subscription.unsubscribe();
+  }, [watch]);
 
   const validateVin = (vin) => {
     if (!vin || vin.trim().length === 0) {
@@ -136,112 +164,132 @@ export default function ReceivePage() {
     return null;
   };
 
+  // Функция валидации всех полей формы (убрана проверка для некоторых полей)
+  const validateForm = (formData) => {
+    console.log('Validating form data:', formData);
+    const errors = {};
+
+    // Проверка обязательных полей справочников
+    if (!formData.carBrandId) errors.carBrandId = 'Выберите марку автомобиля';
+    if (!formData.carModelId) errors.carModelId = 'Выберите модель автомобиля';
+
+    // Проверка других обязательных полей
+    if (!formData.licensePlate?.trim()) errors.licensePlate = 'Гос. номер обязателен';
+    if (!formData.color?.trim()) errors.color = 'Цвет обязателен';
+
+    return errors;
+  };
+
   const handleBrandChange = async (brandId) => {
     try {
-      const response = await axios.get(`${API_URL}/api/car-brands/${brandId}/models`);
+      const api = createApiInstance(token);
+      const response = await api.get(`/api/car-brands/${brandId}/models`);
       setCarModels(response.data);
+      
+      // Убедитесь, что устанавливаем значение правильно
+      setValue('carBrandId', brandId, { shouldValidate: true, shouldDirty: true });
+      
       setValue('carModelId', ''); // Сбрасываем выбор модели
+      
+      // Полностью удаляем ошибку вместо установки в undefined
+      setValidationErrors(prev => {
+        const newErrors = { ...prev };
+        delete newErrors.carBrandId;
+        return newErrors;
+      });
     } catch (error) {
       console.error('Ошибка загрузки моделей:', error);
     }
   };
 
-const handlePrintQR = () => {
-  if (!qr) return;
-  
-  // Создаем окно только с QR-кодом
-  const printWindow = window.open('', '_blank');
-  
-  // HTML только с QR-кодом (без текста)
-  printWindow.document.write(`
-    <!DOCTYPE html>
-    <html>
-    <head>
-      <title>QR-код</title>
-      <style>
-        body { 
-          margin: 0; 
-          padding: 0; 
-          display: flex; 
-          justify-content: center; 
-          align-items: center; 
-          min-height: 100vh; 
-          background: white; 
-        }
-        .qr-container { 
-          text-align: center; 
-        }
-        .qr-code { 
-          margin: 0 auto; 
-        }
-        @media print {
-          body { padding: 0; margin: 0; }
-          .qr-container { 
-            width: 100vw; 
-            height: 100vh; 
+  const handlePrintQR = () => {
+    if (!qr) return;
+    
+    const printWindow = window.open('', '_blank');
+    
+    printWindow.document.write(`
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>QR-код</title>
+        <style>
+          body { 
+            margin: 0; 
+            padding: 0; 
             display: flex; 
             justify-content: center; 
             align-items: center; 
+            min-height: 100vh; 
+            background: white; 
           }
-        }
-        @page { 
-          margin: 0; 
-          size: auto; 
-        }
-      </style>
-    </head>
-    <body>
-      <div class="qr-container">
-        <div class="qr-code">
-          <img src="${document.querySelector('#qrcode-section canvas').toDataURL('image/png')}" 
-               alt="QR Code" 
-               style="width: 200px; height: 200px;">
+          .qr-container { 
+            text-align: center; 
+          }
+          .qr-code { 
+            margin: 0 auto; 
+          }
+          @media print {
+            body { padding: 0; margin: 0; }
+            .qr-container { 
+              width: 100vw; 
+              height: 100vh; 
+              display: flex; 
+              justify-content: center; 
+              align-items: center; 
+            }
+          }
+          @page { 
+            margin: 0; 
+            size: auto; 
+          }
+        </style>
+      </head>
+      <body>
+        <div class="qr-container">
+          <div class="qr-code">
+            <img src="${document.querySelector('#qrcode-section canvas').toDataURL('image/png')}" 
+                 alt="QR Code" 
+                 style="width: 200px; height: 200px;">
+          </div>
         </div>
-      </div>
-      <script>
-        window.onload = function() {
-          window.focus();
-          window.print();
-        }
-      </script>
-    </body>
-    </html>
-  `);
-  
-  printWindow.document.close();
-};
+        <script>
+          window.onload = function() {
+            window.focus();
+            window.print();
+          }
+        </script>
+      </body>
+      </html>
+    `);
+    
+    printWindow.document.close();
+  };
 
   const handlePrintAct = async () => {
-  if (!currentActId) return;
-  try {
-    // Открываем новое окно с URL печати
-    const printWindow = window.open('', '_blank');
-    
-    // Загружаем HTML контент с авторизацией
-    const response = await axios.get(`${API_URL}/vehicle-acts/${currentActId}/print`, {
-      headers: {
-        'Authorization': `Bearer ${token}`
-      }
-    });
-    
-    // Вставляем полученный HTML в новое окно
-    printWindow.document.write(response.data);
-    printWindow.document.close();
-    
-    // Автоматическая печать после загрузки
-    printWindow.onload = function() {
-      printWindow.print();
-    };
-    
-  } catch (error) {
-    console.error('Ошибка при печати акта:', error);
-    alert('Не удалось загрузить акт для печати');
-  }
-};
+    if (!currentActId) return;
+    try {
+      const printWindow = window.open('', '_blank');
+      const api = createApiInstance(token);
+      
+      const response = await api.get(`/vehicle-acts/${currentActId}/print`);
+      
+      printWindow.document.write(response.data);
+      printWindow.document.close();
+      
+      printWindow.onload = function() {
+        printWindow.print();
+      };
+      
+    } catch (error) {
+      console.error('Ошибка при печати акта:', error);
+      alert('Не удалось загрузить акт для печати');
+    }
+  };
 
   const checkVinExists = async (vin) => {
     try {
-      const response = await axios.get(`${API_URL}/vehicle-acts/check-vin/${encodeURIComponent(vin)}`);
+      const api = createApiInstance(token);
+      const response = await api.get(`/vehicle-acts/check-vin/${encodeURIComponent(vin)}`);
       return response.data.exists;
     } catch (error) {
       console.error('Error checking VIN:', error);
@@ -285,11 +333,36 @@ const handlePrintQR = () => {
     if (formSubmitted) return;
     
     try {
-      const vinValidationError = validateVin(formData.vin);
-      if (vinValidationError) {
-        alert(vinValidationError);
+      // Проверка что токен есть
+      if (!token) {
+        alert('Ошибка авторизации. Перезагрузите страницу.');
         return;
       }
+
+      // Валидация VIN
+      const vinValidationError = validateVin(formData.vin);
+      if (vinValidationError) {
+        setVinError(vinValidationError);
+        document.querySelector('[name="vin"]')?.scrollIntoView({ 
+          behavior: 'smooth', 
+          block: 'center' 
+        });
+        return;
+      }
+
+      // Валидация всех полей формы
+      const formErrors = validateForm(formData);
+      if (Object.keys(formErrors).length > 0) {
+        setValidationErrors(formErrors);
+        const firstErrorField = Object.keys(formErrors)[0];
+        document.querySelector(`[name="${firstErrorField}"]`)?.scrollIntoView({ 
+          behavior: 'smooth', 
+          block: 'center' 
+        });
+        return;
+      }
+
+      setValidationErrors({});
       
       const vinExists = await checkVinExists(formData.vin);
       if (vinExists) {
@@ -316,11 +389,13 @@ const handlePrintQR = () => {
         equipment: formData.equipment || {},
         inspectionTime: String(formData.inspection?.time || 'день'),
         externalCondition: String(formData.externalCondition || 'Чистый'),
-        interiorCondition: String(formData.interiorCondition || 'Чистый'),
+        interiorCondition: String(formData.interiorCondition || 'Чистый'), // Исправлено: берем значение из формы
         paintInspectionImpossible: Boolean(formData.paintInspectionImpossible),
         internalContents: String(formData.internalContents || ''),
         fuelLevel: String(formData.fuelLevel || '0%')
       };
+
+      console.log('Processed data for submission:', processedData); // Для отладки
 
       setSubmittedData(processedData);
       setShowTransferDialog(true);
@@ -336,8 +411,16 @@ const handlePrintQR = () => {
   const handleTransferConfirm = async () => {
     if (!submittedData) return;
     
+    const formErrors = validateForm(submittedData);
+    if (Object.keys(formErrors).length > 0) {
+      setValidationErrors(formErrors);
+      setShowTransferDialog(false);
+      return;
+    }
+    
     try {
       setIsSubmitting(true);
+      const api = createApiInstance(token);
       
       const multipartData = new FormData();
       
@@ -353,6 +436,7 @@ const handlePrintQR = () => {
       multipartData.append('color', submittedData.color);
       multipartData.append('year', submittedData.year.toString());
       multipartData.append('externalCondition', submittedData.externalCondition);
+      multipartData.append('interiorCondition', submittedData.interiorCondition); // Исправлено: передаем значение состояния салона
       multipartData.append('paintInspectionImpossible', submittedData.paintInspectionImpossible.toString());
       multipartData.append('internalContents', submittedData.internalContents);
       multipartData.append('fuelLevel', submittedData.fuelLevel);
@@ -363,10 +447,9 @@ const handlePrintQR = () => {
         multipartData.append('photos', file);
       });
 
-      const response = await axios.post(`${API_URL}/vehicle-acts`, multipartData, {
+      const response = await api.post('/vehicle-acts', multipartData, {
         headers: { 
-          'Content-Type': 'multipart/form-data',
-          'Authorization': `Bearer ${token}`
+          'Content-Type': 'multipart/form-data'
         },
         timeout: 10000,
       });
@@ -378,6 +461,7 @@ const handlePrintQR = () => {
       setShowTransferDialog(false);
       setSubmittedData(null);
       setFormSubmitted(true);
+      setValidationErrors({});
       
     } catch (err) {
       console.error('Full error:', err);
@@ -415,6 +499,7 @@ const handlePrintQR = () => {
     setVinError(null);
     setShowPrintButtons(false);
     setCurrentActId(null);
+    setValidationErrors({});
   };
 
   const handleNewInspectionCancel = () => {
@@ -433,6 +518,16 @@ const handlePrintQR = () => {
     promptNewInspection();
   };
 
+  const handleInputChange = (fieldName) => {
+    if (validationErrors[fieldName]) {
+      setValidationErrors(prev => {
+        const newErrors = { ...prev };
+        delete newErrors[fieldName]; // Полностью удаляем свойство
+        return newErrors;
+      });
+    }
+  };
+
   return (
     <div className="receive-container">
       <div className="receive-header">
@@ -446,48 +541,115 @@ const handlePrintQR = () => {
         <input type="hidden" {...register('date')} />
 
         <div className="form-group">
-          <input {...register('principal')} placeholder="Принципал/Получатель" className="form-input" disabled={formSubmitted} />
+          <input 
+            {...register('principal')} 
+            placeholder="Принципал/Получатель" 
+            className={`form-input ${validationErrors.principal ? 'error' : ''}`} 
+            disabled={formSubmitted}
+            onChange={(e) => {
+              const onChange = register('principal').onChange;
+              onChange(e);
+              handleInputChange('principal');
+            }}
+          />
+          {validationErrors.principal && <p className="error-text">{validationErrors.principal}</p>}
         </div>
 
         <div className="form-group">
-          <input {...register('sender')} placeholder="Отправитель" className="form-input" disabled={formSubmitted} />
+          <input 
+            {...register('sender')} 
+            placeholder="Отправитель" 
+            className={`form-input ${validationErrors.sender ? 'error' : ''}`} 
+            disabled={formSubmitted}
+            onChange={(e) => {
+              const onChange = register('sender').onChange;
+              onChange(e);
+              handleInputChange('sender');
+            }}
+          />
+          {validationErrors.sender && <p className="error-text">{validationErrors.sender}</p>}
         </div>
 
         <div className="form-group">
           <label>Направление</label>
-          <select {...register('directionId')} className="form-select" disabled={formSubmitted}>
+          <select 
+            {...register('directionId')} 
+            className={`form-select ${validationErrors.directionId ? 'error' : ''}`} 
+            disabled={formSubmitted}
+            onChange={(e) => {
+              const onChange = register('directionId').onChange;
+              onChange(e);
+              handleInputChange('directionId');
+            }}
+          >
             <option value="">Выберите направление</option>
             {directions.map(dir => (
               <option key={dir.id} value={dir.id}>{dir.name}</option>
             ))}
           </select>
+          {validationErrors.directionId && <p className="error-text">{validationErrors.directionId}</p>}
         </div>
 
         <div className="form-group">
           <label>Способ перевозки</label>
-          <select {...register('transportMethodId')} className="form-select" disabled={formSubmitted}>
+          <select 
+            {...register('transportMethodId')} 
+            className={`form-select ${validationErrors.transportMethodId ? 'error' : ''}`} 
+            disabled={formSubmitted}
+            onChange={(e) => {
+              const onChange = register('transportMethodId').onChange;
+              onChange(e);
+              handleInputChange('transportMethodId');
+            }}
+          >
             <option value="">Выберите способ перевозки</option>
             {transportMethods.map(method => (
               <option key={method.id} value={method.id}>{method.name}</option>
             ))}
           </select>
+          {validationErrors.transportMethodId && <p className="error-text">{validationErrors.transportMethodId}</p>}
         </div>
 
         <div className="form-group">
-          <input {...register('vin')} placeholder="VIN*" required className="form-input" disabled={formSubmitted} />
+          <input 
+            {...register('vin')} 
+            placeholder="VIN*" 
+            required 
+            className={`form-input ${vinError ? 'error' : ''}`} 
+            disabled={formSubmitted}
+          />
           {vinError && <p className="error-text">{vinError}</p>}
         </div>
 
         <div className="form-group">
-          <input {...register('licensePlate')} placeholder="Гос. номер*" required className="form-input" disabled={formSubmitted} />
+          <input 
+            {...register('licensePlate')} 
+            placeholder="Гос. номер*" 
+            required 
+            className={`form-input ${validationErrors.licensePlate ? 'error' : ''}`} 
+            disabled={formSubmitted}
+            onChange={(e) => {
+              const onChange = register('licensePlate').onChange;
+              onChange(e);
+              handleInputChange('licensePlate');
+            }}
+          />
+          {validationErrors.licensePlate && <p className="error-text">{validationErrors.licensePlate}</p>}
         </div>
 
         <div className="form-group">
           <label>Марка*</label>
           <select 
-            {...register('carBrandId', { required: true })} 
-            onChange={(e) => handleBrandChange(e.target.value)}
-            className="form-select"
+            {...register('carBrandId', { 
+              required: true,
+              onChange: (e) => {
+                const brandId = e.target.value;
+                if (brandId) {
+                  handleBrandChange(brandId);
+                }
+              }
+            })} 
+            className={`form-select ${validationErrors.carBrandId ? 'error' : ''}`}
             disabled={formSubmitted}
           >
             <option value="">Выберите марку</option>
@@ -495,29 +657,58 @@ const handlePrintQR = () => {
               <option key={brand.id} value={brand.id}>{brand.name}</option>
             ))}
           </select>
+          {validationErrors.carBrandId && <p className="error-text">{validationErrors.carBrandId}</p>}
         </div>
 
         <div className="form-group">
           <label>Модель*</label>
           <select 
-            {...register('carModelId', { required: true })} 
-            className="form-select"
+            {...register('carModelId', { required: true })}
+            className={`form-select ${validationErrors.carModelId ? 'error' : ''}`}
             disabled={formSubmitted || !carModels.length}
+            onChange={(e) => {
+              const onChange = register('carModelId').onChange;
+              onChange(e);
+              handleInputChange('carModelId');
+            }}
           >
             <option value="">Выберите модель</option>
             {carModels.map(model => (
               <option key={model.id} value={model.id}>{model.name}</option>
             ))}
           </select>
+          {validationErrors.carModelId && <p className="error-text">{validationErrors.carModelId}</p>}
         </div>
 
         <div className="form-group">
-          <input {...register('color')} placeholder="Цвет*" required className="form-input" disabled={formSubmitted} />
+          <input 
+            {...register('color')} 
+            placeholder="Цвет*" 
+            required 
+            className={`form-input ${validationErrors.color ? 'error' : ''}`} 
+            disabled={formSubmitted}
+            onChange={(e) => {
+              const onChange = register('color').onChange;
+              onChange(e);
+              handleInputChange('color');
+            }}
+          />
+          {validationErrors.color && <p className="error-text">{validationErrors.color}</p>}
         </div>
 
         <div className="form-group">
           <label>Год выпуска*</label>
-          <select {...register('year')} className="form-select" defaultValue={YEARS[0]} required disabled={formSubmitted}>
+          <select 
+            {...register('year')} 
+            className="form-select" 
+            defaultValue={YEARS[0]} 
+            required 
+            disabled={formSubmitted}
+            onChange={(e) => {
+              const onChange = register('year').onChange;
+              onChange(e);
+            }}
+          >
             {YEARS.map((y) => (
               <option key={y} value={y}>{y}</option>
             ))}
@@ -529,7 +720,16 @@ const handlePrintQR = () => {
           {EQUIPMENT_ITEMS.map(({ key, label, options }) => (
             <div key={key} className="equipment-item">
               <span>{label}</span>
-              <select {...register(`equipment.${key}`)} className="form-select" defaultValue="нет" disabled={formSubmitted}>
+              <select 
+                {...register(`equipment.${key}`)} 
+                className="form-select" 
+                defaultValue="нет" 
+                disabled={formSubmitted}
+                onChange={(e) => {
+                  const onChange = register(`equipment.${key}`).onChange;
+                  onChange(e);
+                }}
+              >
                 {options.map((o) => (
                   <option key={o} value={o}>{o}</option>
                 ))}
@@ -540,7 +740,16 @@ const handlePrintQR = () => {
 
         <div className="form-group">
           <label>Уровень топлива</label>
-          <select {...register('fuelLevel')} className="form-select" defaultValue="0%" disabled={formSubmitted}>
+          <select 
+            {...register('fuelLevel')} 
+            className="form-select" 
+            defaultValue="0%" 
+            disabled={formSubmitted}
+            onChange={(e) => {
+              const onChange = register('fuelLevel').onChange;
+              onChange(e);
+            }}
+          >
             {Array.from({ length: 21 }, (_, i) => i * 5).map((level) => (
               <option key={level} value={`${level}%`}>{level}%</option>
             ))}
@@ -549,7 +758,16 @@ const handlePrintQR = () => {
 
         <div className="form-group">
           <label>Условия осмотра</label>
-          <select {...register('inspection.time')} className="form-select" defaultValue="день" disabled={formSubmitted}>
+          <select 
+            {...register('inspection.time')} 
+            className="form-select" 
+            defaultValue="день" 
+            disabled={formSubmitted}
+            onChange={(e) => {
+              const onChange = register('inspection.time').onChange;
+              onChange(e);
+            }}
+          >
             {INSPECTION_TIMES.map((t) => (
               <option key={t} value={t}>{t}</option>
             ))}
@@ -558,29 +776,66 @@ const handlePrintQR = () => {
 
         <div className="form-group">
           <label>Внешнее состояние а/м</label>
-          <select {...register('externalCondition')} className="form-select" defaultValue="Чистый" disabled={formSubmitted}>
+          <select 
+            {...register('externalCondition')} 
+            className="form-select" 
+            defaultValue="Чистый" 
+            disabled={formSubmitted}
+            onChange={(e) => {
+              const onChange = register('externalCondition').onChange;
+              onChange(e);
+            }}
+          >
             {EXTERNAL_CONDITIONS.map((v) => (
               <option key={v} value={v}>{v}</option>
             ))}
           </select>
         </div>
 
-<div className="form-group">
-  <label>Состояние салона автомобиля</label>
-  <select {...register('interiorCondition')} className="form-select" defaultValue="Чистый" disabled={formSubmitted}>
-    <option value="Чистый">Чистый</option>
-    <option value="Грязный">Грязный</option>
-    <option value="Поврежден">Поврежден</option>
-  </select>
-</div>
+        <div className="form-group">
+          <label>Состояние салона автомобиля</label>
+          <select 
+            {...register('interiorCondition')} 
+            className="form-select" 
+            defaultValue="Чистый" 
+            disabled={formSubmitted}
+            onChange={(e) => {
+              const onChange = register('interiorCondition').onChange;
+              onChange(e);
+              console.log('Interior condition changed to:', e.target.value); // Для отладки
+            }}
+          >
+            <option value="Чистый">Чистый</option>
+            <option value="Грязный">Грязный</option>
+            <option value="Поврежден">Поврежден</option>
+          </select>
+        </div>
 
         <div className="form-group">
           <label>Внутренние вложения</label>
-          <textarea {...register('internalContents')} placeholder="Опишите внутренние вложения..." rows={3} className="form-textarea" disabled={formSubmitted} />
+          <textarea 
+            {...register('internalContents')} 
+            placeholder="Опишите внутренние вложения..." 
+            rows={3} 
+            className="form-textarea" 
+            disabled={formSubmitted}
+            onChange={(e) => {
+              const onChange = register('internalContents').onChange;
+              onChange(e);
+            }}
+          />
         </div>
 
         <div className="form-group checkbox-group">
-          <input type="checkbox" {...register('paintInspectionImpossible')} disabled={formSubmitted} />
+          <input 
+            type="checkbox" 
+            {...register('paintInspectionImpossible')} 
+            disabled={formSubmitted}
+            onChange={(e) => {
+              const onChange = register('paintInspectionImpossible').onChange;
+              onChange(e);
+            }}
+          />
           <span>осмотр ЛКП невозможен</span>
         </div>
 
@@ -618,12 +873,25 @@ const handlePrintQR = () => {
           </div>
         )}
 
-        <button type="submit" disabled={isSubmitting || formSubmitted || !!vinError} className="submit-btn">
+        <button 
+          type="submit" 
+          disabled={isSubmitting || formSubmitted || !!vinError || Object.keys(validationErrors).length > 0} 
+          className="submit-btn"
+          onClick={() => {
+            console.log('=== BUTTON DEBUG ===');
+            console.log('isSubmitting:', isSubmitting);
+            console.log('formSubmitted:', formSubmitted);
+            console.log('vinError:', vinError);
+            console.log('validationErrors:', validationErrors);
+            console.log('validationErrors count:', Object.keys(validationErrors).length);
+            console.log('Total disabled:', isSubmitting || formSubmitted || !!vinError || Object.keys(validationErrors).length > 0);
+            console.log('====================');
+          }}
+        >
           {isSubmitting ? 'Сохранение...' : 'Сохранить и получить QR'}
         </button>
       </form>
 
-      {/* Диалоговые окна */}
       {showTransferDialog && (
         <div className="dialog-overlay">
           <div className="dialog">

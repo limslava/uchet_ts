@@ -2,6 +2,8 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import path from 'path';
+import fs from 'fs';
+import https from 'https';
 import { logger } from './config/logger.js';
 import { PrismaClient } from '@prisma/client';
 
@@ -18,12 +20,25 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 5000;
 
+// Пути к SSL сертификатам
+const sslOptions = {
+  key: fs.readFileSync(path.join(process.cwd(), 'certs', 'localhost+3-key.pem')),
+  cert: fs.readFileSync(path.join(process.cwd(), 'certs', 'localhost+3.pem'))
+};
+
 // Инициализация Prisma Client
 export const prisma = new PrismaClient();
 
 // Middleware
 app.use(cors({
-  origin: 'http://localhost:3000',
+  origin: [
+    'https://localhost:3000',
+    'https://127.0.0.1:3000',
+    'https://192.168.0.121:3000',
+    'http://localhost:3000',      // Для обратной совместимости
+    'http://127.0.0.1:3000',
+    'http://192.168.0.121:3000'
+  ],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
@@ -76,14 +91,17 @@ app.get('/api/test-db', async (req, res) => {
   }
 });
 
-// Start server
-app.use((req, res, next) => {
-  logger.info(`${req.method} ${req.path}`);
-  next();
+// Start HTTPS server
+https.createServer(sslOptions, app).listen(PORT, () => {
+  logger.info(`HTTPS Server is running on port ${PORT}`);
+  console.log(`HTTPS Server is running on https://localhost:${PORT}`);
+  console.log(`Also available on https://192.168.0.121:${PORT}`);
 });
-app.listen(PORT, () => {
-  logger.info(`Server is running on port ${PORT}`);
-  console.log(`Server is running on http://localhost:${PORT}`);
+
+// Также запускаем HTTP сервер для обратной совместимости (на другом порту)
+const HTTP_PORT = 8080;
+app.listen(HTTP_PORT, () => {
+  console.log(`HTTP Server is running on http://localhost:${HTTP_PORT}`);
 });
 
 // Graceful shutdown
