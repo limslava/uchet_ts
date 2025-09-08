@@ -62,6 +62,48 @@ export const login = async (email, password) => {
   return response.json();
 };
 
+export const selectLocation = async (userId, locationId) => {
+  try {
+    const token = localStorage.getItem('token');
+    
+    console.log('Token from localStorage:', token);
+    
+    if (!token || token === 'null' || token === 'undefined') {
+      throw new Error('Токен не найден в localStorage');
+    }
+
+    const response = await fetch(`${API_BASE_URL}/api/auth/${userId}/location`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+      body: JSON.stringify({ locationId }),
+    });
+
+    if (response.status === 401) {
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      window.location.href = '/login';
+      throw new Error('Сессия истекла. Пожалуйста, войдите снова.');
+    }
+
+    if (response.status === 403) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || 'Недостаточно прав для выполнения операции');
+    }
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    return response.json();
+  } catch (error) {
+    console.error('Error in selectLocation:', error);
+    throw error;
+  }
+};
+
 export const getCarBrands = async () => {
   return request('/api/car-brands');
 };

@@ -19,7 +19,7 @@ const ReceiveByScan = () => {
       let actId = decodedText;
       
       // Если это URL, извлекаем только ID
-      if (decodedText.includes('/vehicle-acts/')) {
+      if (decodedText && decodedText.includes('/vehicle-acts/')) {
         const urlParts = decodedText.split('/vehicle-acts/');
         actId = urlParts[urlParts.length - 1];
       }
@@ -37,7 +37,7 @@ const ReceiveByScan = () => {
 
   const handleScanError = (error) => {
     // Игнорируем ошибки "QR code not found"
-    if (!error.message.includes('No MultiFormat Readers')) {
+    if (error && error.message && !error.message.includes('No MultiFormat Readers')) {
       console.error('Scanner error:', error);
     }
   };
@@ -55,22 +55,6 @@ const ReceiveByScan = () => {
 
   return (
     <div className="receive-by-scan">
-      <button 
-        onClick={() => navigate('/')}
-        className="btn-back"
-        style={{
-          marginBottom: '20px',
-          padding: '10px 20px',
-          backgroundColor: '#6c757d',
-          color: 'white',
-          border: 'none',
-          borderRadius: '4px',
-          cursor: 'pointer'
-        }}
-      >
-        ← Назад
-      </button>
-      
       <h2>Прием ТС по QR-коду</h2>
       
       {!scanResult && (
@@ -78,6 +62,7 @@ const ReceiveByScan = () => {
           <QrScanner 
             onScanSuccess={handleScanSuccess}
             onScanError={handleScanError}
+            showCameraSelection={true}
           />
           {loading && <p>Загрузка...</p>}
         </>
@@ -87,11 +72,17 @@ const ReceiveByScan = () => {
       
       {scanResult && (
         <div className="scan-result">
-          <h3>Найден акт:</h3>
-          <p><strong>Номер акта:</strong> {scanResult.contractNumber}</p>
-          <p><strong>VIN:</strong> {scanResult.vin}</p>
-          <p><strong>Марка:</strong> {scanResult.carBrand?.name}</p>
-          <p><strong>Модель:</strong> {scanResult.carModel?.name}</p>
+          <h3>Найден Акт:</h3>
+          <div className="act-details">
+            <p><strong>Договор №:</strong> {scanResult.contractNumber}</p>
+            <p><strong>Марка:</strong> {scanResult.carBrand?.name || 'Не указано'}</p>
+            <p><strong>Модель:</strong> {scanResult.carModel?.name || 'Не указано'}</p>
+            <p><strong>Гос.номер:</strong> {scanResult.licensePlate || 'Не указано'}</p>
+            <p><strong>Цвет:</strong> {scanResult.color || 'Не указано'}</p>
+            <p><strong>VIN:</strong> {scanResult.vin || 'Не указано'}</p>
+            <p><strong>Направление:</strong> {scanResult.direction?.name || 'Не указано'}</p>
+            <p><strong>Способ перевозки:</strong> {scanResult.transportMethod?.name || 'Не указано'}</p>
+          </div>
           
           <div className="action-buttons">
             <button onClick={confirmReceipt} className="btn-primary">
@@ -99,6 +90,9 @@ const ReceiveByScan = () => {
             </button>
             <button onClick={() => setScanResult(null)} className="btn-secondary">
               Сканировать снова
+            </button>
+            <button onClick={() => navigate('/')} className="btn-back">
+              Назад
             </button>
           </div>
         </div>

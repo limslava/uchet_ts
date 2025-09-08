@@ -37,7 +37,6 @@ const EQUIPMENT_ITEMS = [
 const INSPECTION_TIMES = ['день', 'темное время суток', 'дождь', 'снег'];
 const EXTERNAL_CONDITIONS = ['Чистый', 'грязный', 'мокрый', 'в пыли', 'в снегу', 'обледенелый'];
 
-// Создайте instance axios с токеном по умолчанию
 const createApiInstance = (token) => {
   return axios.create({
     baseURL: API_URL,
@@ -70,12 +69,10 @@ export default function ReceivePage() {
   const [validationErrors, setValidationErrors] = useState({});
   const currentVin = watch('vin');
 
-  // Отслеживание ошибок валидации для отладки
   useEffect(() => {
     console.log('Validation errors:', validationErrors);
   }, [validationErrors]);
 
-  // Авторизация при загрузке
   useEffect(() => {
     const login = async () => {
       try {
@@ -92,7 +89,6 @@ export default function ReceivePage() {
     login();
   }, []);
 
-  // Загрузка справочников
   useEffect(() => {
     const loadDictionaries = async () => {
       try {
@@ -122,13 +118,11 @@ export default function ReceivePage() {
     }
   }, [token]);
 
-  // Устанавливаем текущую дату
   useEffect(() => {
     const currentDate = new Date().toISOString().split('T')[0];
     setValue('date', currentDate);
   }, [setValue]);
 
-  // Валидация VIN
   useEffect(() => {
     if (currentVin) {
       const error = validateVin(currentVin);
@@ -138,7 +132,6 @@ export default function ReceivePage() {
     }
   }, [currentVin]);
 
-  // Отслеживание изменений формы для отладки
   useEffect(() => {
     const subscription = watch((value, { name, type }) => {
       console.log('Form values changed:', value);
@@ -164,16 +157,13 @@ export default function ReceivePage() {
     return null;
   };
 
-  // Функция валидации всех полей формы (убрана проверка для некоторых полей)
   const validateForm = (formData) => {
     console.log('Validating form data:', formData);
     const errors = {};
 
-    // Проверка обязательных полей справочников
     if (!formData.carBrandId) errors.carBrandId = 'Выберите марку автомобиля';
     if (!formData.carModelId) errors.carModelId = 'Выберите модель автомобиля';
 
-    // Проверка других обязательных полей
     if (!formData.licensePlate?.trim()) errors.licensePlate = 'Гос. номер обязателен';
     if (!formData.color?.trim()) errors.color = 'Цвет обязателен';
 
@@ -186,12 +176,10 @@ export default function ReceivePage() {
       const response = await api.get(`/api/car-brands/${brandId}/models`);
       setCarModels(response.data);
       
-      // Убедитесь, что устанавливаем значение правильно
       setValue('carBrandId', brandId, { shouldValidate: true, shouldDirty: true });
       
-      setValue('carModelId', ''); // Сбрасываем выбор модели
+      setValue('carModelId', '');
       
-      // Полностью удаляем ошибку вместо установки в undefined
       setValidationErrors(prev => {
         const newErrors = { ...prev };
         delete newErrors.carBrandId;
@@ -333,13 +321,11 @@ export default function ReceivePage() {
     if (formSubmitted) return;
     
     try {
-      // Проверка что токен есть
       if (!token) {
         alert('Ошибка авторизации. Перезагрузите страницу.');
         return;
       }
 
-      // Валидация VIN
       const vinValidationError = validateVin(formData.vin);
       if (vinValidationError) {
         setVinError(vinValidationError);
@@ -350,7 +336,6 @@ export default function ReceivePage() {
         return;
       }
 
-      // Валидация всех полей формы
       const formErrors = validateForm(formData);
       if (Object.keys(formErrors).length > 0) {
         setValidationErrors(formErrors);
@@ -363,14 +348,6 @@ export default function ReceivePage() {
       }
 
       setValidationErrors({});
-      
-      const vinExists = await checkVinExists(formData.vin);
-      if (vinExists) {
-        const shouldContinue = window.confirm(`Акт с VIN "${formData.vin}" уже существует. Создать новый?`);
-        if (!shouldContinue) {
-          return;
-        }
-      }
       
       setIsSubmitting(true);
       
@@ -389,13 +366,13 @@ export default function ReceivePage() {
         equipment: formData.equipment || {},
         inspectionTime: String(formData.inspection?.time || 'день'),
         externalCondition: String(formData.externalCondition || 'Чистый'),
-        interiorCondition: String(formData.interiorCondition || 'Чистый'), // Исправлено: берем значение из формы
+        interiorCondition: String(formData.interiorCondition || 'Чистый'),
         paintInspectionImpossible: Boolean(formData.paintInspectionImpossible),
         internalContents: String(formData.internalContents || ''),
         fuelLevel: String(formData.fuelLevel || '0%')
       };
 
-      console.log('Processed data for submission:', processedData); // Для отладки
+      console.log('Processed data for submission:', processedData);
 
       setSubmittedData(processedData);
       setShowTransferDialog(true);
@@ -436,7 +413,7 @@ export default function ReceivePage() {
       multipartData.append('color', submittedData.color);
       multipartData.append('year', submittedData.year.toString());
       multipartData.append('externalCondition', submittedData.externalCondition);
-      multipartData.append('interiorCondition', submittedData.interiorCondition); // Исправлено: передаем значение состояния салона
+      multipartData.append('interiorCondition', submittedData.interiorCondition);
       multipartData.append('paintInspectionImpossible', submittedData.paintInspectionImpossible.toString());
       multipartData.append('internalContents', submittedData.internalContents);
       multipartData.append('fuelLevel', submittedData.fuelLevel);
@@ -466,9 +443,7 @@ export default function ReceivePage() {
     } catch (err) {
       console.error('Full error:', err);
       
-      if (err.response?.status === 409) {
-        alert(`Ошибка: ${err.response.data?.message || 'Акт с таким VIN уже существует'}`);
-      } else if (err.code === 'ECONNREFUSED') {
+      if (err.code === 'ECONNREFUSED') {
         alert('Ошибка: Бэкенд сервер не запущен');
       } else if (err.response) {
         alert(`Ошибка сервера: ${err.response.status}`);
@@ -522,7 +497,7 @@ export default function ReceivePage() {
     if (validationErrors[fieldName]) {
       setValidationErrors(prev => {
         const newErrors = { ...prev };
-        delete newErrors[fieldName]; // Полностью удаляем свойство
+        delete newErrors[fieldName];
         return newErrors;
       });
     }
@@ -802,7 +777,7 @@ export default function ReceivePage() {
             onChange={(e) => {
               const onChange = register('interiorCondition').onChange;
               onChange(e);
-              console.log('Interior condition changed to:', e.target.value); // Для отладки
+              console.log('Interior condition changed to:', e.target.value);
             }}
           >
             <option value="Чистый">Чистый</option>

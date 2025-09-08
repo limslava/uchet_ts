@@ -10,7 +10,8 @@
     "db:generate": "npx prisma generate",
     "db:push": "npx prisma db push",
     "db:migrate": "npx prisma migrate dev --name init",
-    "db:studio": "npx prisma studio"
+    "db:studio": "npx prisma studio",
+    "seed": "node src/seed.js"
   },
   "keywords": [
     "vehicle",
@@ -19,6 +20,9 @@
   ],
   "author": "limslava",
   "license": "ISC",
+  "prisma": {
+    "seed": "node src/seed.js"
+  },
   "dependencies": {
     "@nestjs/platform-express": "^11.1.6",
     "@prisma/client": "^6.15.0",

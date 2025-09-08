@@ -164,16 +164,16 @@ router.post('/', authenticateToken, (req, res, next) => {
     } = req.body;
 
     // Проверяем существующий VIN
-    const existingAct = await prisma.vehicleAct.findUnique({
-      where: { vin }
-    });
+    //const existingAct = await prisma.vehicleAct.findUnique({
+     // where: { vin }
+    //});
 
-    if (existingAct) {
-      return res.status(409).json({
-        error: 'Акт с таким VIN уже существует',
-        existingAct
-      });
-    }
+    //if (existingAct) {
+      //return res.status(409).json({
+       // error: 'Акт с таким VIN уже существует',
+        //existingAct
+     // });
+    //}
 
     const contractNumber = await generateContractNumber();
     
@@ -191,47 +191,64 @@ router.post('/', authenticateToken, (req, res, next) => {
       return uniqueName;
     }) : [];
 
-    // Создаем акт
-   const vehicleAct = await prisma.vehicleAct.create({
-  data: {
-    contractNumber,
-    date: new Date(),
-    principal,
-    sender,
-    directionId: directionId ? parseInt(directionId) : null,
-    transportMethodId: transportMethodId ? parseInt(transportMethodId) : null,
-    vin,
-    licensePlate,
-    carBrandId: carBrandId ? parseInt(carBrandId) : null,
-    carModelId: carModelId ? parseInt(carModelId) : null,
-    color,
-    year: parseInt(year),
-    fuelLevel: convertFuelLevel(fuelLevel),
-    internalContents,
-    inspectionTime: convertInspectionTime(inspectionTime),
-    externalCondition: convertExternalCondition(externalCondition),
-    interiorCondition: convertInteriorCondition(interiorCondition),
-    paintInspectionImpossible: paintInspectionImpossible === 'true',
-    equipment: JSON.parse(equipment || '{}'),
-    status: 'NEW',
-    userId: req.user.id,
-    photos: {
-      create: photoNames.map(filename => ({ filename }))
+    // Проверяем, есть ли у пользователя локация
+    const user = await prisma.user.findUnique({
+      where: { id: req.user.id },
+      include: { location: true }
+    });
+
+    if (!user.locationId && user.role === 'RECEIVER') {
+      return res.status(400).json({ 
+        error: 'У пользователя не выбрана локация. Пожалуйста, выберите локацию перед созданием акта.' 
+      });
     }
-  },
-  include: {
-    photos: true,
-    user: {
-      select: {
-        id: true,
-        email: true,
-        name: true
+
+    // Создаем акт
+    const vehicleAct = await prisma.vehicleAct.create({
+      data: {
+        contractNumber,
+        date: new Date(),
+        principal,
+        sender,
+        direction: directionId ? { connect: { id: parseInt(directionId) } } : undefined,
+        transportMethod: transportMethodId ? { connect: { id: parseInt(transportMethodId) } } : undefined,
+        vin,
+        licensePlate,
+        carBrand: carBrandId ? { connect: { id: parseInt(carBrandId) } } : undefined,
+        carModel: carModelId ? { connect: { id: parseInt(carModelId) } } : undefined,
+        color,
+        year: parseInt(year),
+        fuelLevel: convertFuelLevel(fuelLevel),
+        internalContents,
+        inspectionTime: convertInspectionTime(inspectionTime),
+        externalCondition: convertExternalCondition(externalCondition),
+        interiorCondition: convertInteriorCondition(interiorCondition),
+        paintInspectionImpossible: paintInspectionImpossible === 'true',
+        equipment: JSON.parse(equipment || '{}'),
+        status: 'NEW',
+        user: { connect: { id: req.user.id } },
+        Location: user.locationId ? { connect: { id: user.locationId } } : undefined,
+        photos: {
+          create: photoNames.map(filename => ({ filename }))
+        }
+      },
+      include: {
+        photos: true,
+        user: {
+          select: {
+            id: true,
+            email: true,
+            name: true
+          }
+        },
+        carBrand: true,
+        carModel: true,
+        direction: true,
+        transportMethod: true,
+        Location: true
       }
-    },
-    carBrand: true,
-    carModel: true
-  }
-});
+    });
+
     res.status(201).json(vehicleAct);
   } catch (error) {
     console.error('Create vehicle act error:', error);
@@ -252,7 +269,8 @@ router.get('/:id/export-docx', authenticateToken, async (req, res) => {
         transportMethod: true,
         carBrand: true,
         carModel: true,
-        photos: true
+        photos: true,
+        Location: true
       }
     });
 
@@ -260,12 +278,13 @@ router.get('/:id/export-docx', authenticateToken, async (req, res) => {
       return res.status(404).json({ error: 'Акт не найден' });
     }
 
-    // 2. Подготовить данные для сервиса.
+    // Подготовить данные для сервиса
     const dataForExport = {
       ...act,
       makeModel: `${act.carBrand?.name || ''} ${act.carModel?.name || ''}`.trim(),
       direction: act.direction?.name,
       transportMethod: act.transportMethod?.name,
+      location: act.Location?.name,
       equipment: typeof act.equipment === 'string' ? JSON.parse(act.equipment) : act.equipment || {},
       fuelLevel: convertFuelLevelToText(act.fuelLevel),
       inspectionTime: convertInspectionTimeToText(act.inspectionTime),
@@ -305,7 +324,8 @@ router.get('/', authenticateToken, async (req, res) => {
         carBrand: true,
         carModel: true,
         direction: true,
-        transportMethod: true
+        transportMethod: true,
+        Location: true
       },
       orderBy: {
         createdAt: 'desc'
@@ -337,7 +357,8 @@ router.get('/:id', authenticateToken, async (req, res) => {
         carBrand: true,
         carModel: true,
         direction: true,
-        transportMethod: true
+        transportMethod: true,
+        Location: true
       }
     });
 
@@ -365,6 +386,7 @@ router.get('/:id/print', authenticateToken, async (req, res) => {
         carBrand: true,
         carModel: true,
         photos: true,
+        Location: true,
         user: {
           select: {
             name: true,
@@ -384,6 +406,7 @@ router.get('/:id/print', authenticateToken, async (req, res) => {
       makeModel: `${act.carBrand?.name || ''} ${act.carModel?.name || ''}`.trim(),
       direction: act.direction?.name,
       transportMethod: act.transportMethod?.name,
+      location: act.Location?.name,
       equipment: typeof act.equipment === 'string' ? JSON.parse(act.equipment) : act.equipment || {},
       fuelLevel: convertFuelLevelToText(act.fuelLevel),
       inspectionTime: convertInspectionTimeToText(act.inspectionTime),
@@ -420,7 +443,7 @@ router.post('/:id/receive', authenticateToken, async (req, res) => {
     }
 
     // Обновляем статус акта
-     const updatedAct = await prisma.vehicleAct.update({
+    const updatedAct = await prisma.vehicleAct.update({
       where: { id },
       data: {
         status: 'RECEIVED',
@@ -438,7 +461,8 @@ router.post('/:id/receive', authenticateToken, async (req, res) => {
         carBrand: true,
         carModel: true,
         direction: true,
-        transportMethod: true
+        transportMethod: true,
+        Location: true
       }
     });
 
@@ -485,19 +509,26 @@ const generatePrintableHtml = (act) => {
             line-height: 1.2;
             font-size: 11px;
         }
-        .header { 
-            text-align: center; 
-            margin-bottom: 10px;
-            border-bottom: 1px solid #333;
-            padding-bottom: 5px;
-        }
+        
+        /* Реквизиты компании - выравнивание по правому краю */
         .company-info {
             text-align: right;
             font-size: 12px;
             margin-bottom: 10px;
             line-height: 1.1;
             margin-right: 0px;
+            width: 100%;
         }
+        
+        /* Заголовок - выравнивание по центру */
+        .header {
+            text-align: center;
+            margin-bottom: 10px;
+            border-bottom: 1px solid #333;
+            padding-bottom: 5px;
+            width: 100%;
+        }
+        
         table {
             width: 100%;
             border-collapse: collapse;
@@ -518,6 +549,7 @@ const generatePrintableHtml = (act) => {
             margin-top: 8px;
             margin-bottom: 2px;
             font-size: 10px;
+            text-align: left;
         }
         .equipment-grid {
             display: grid;
@@ -525,10 +557,12 @@ const generatePrintableHtml = (act) => {
             gap: 3px;
             margin: 5px 0;
             font-size: 9px;
+            text-align: left;
         }
         .equipment-item {
             padding: 2px;
             border-bottom: 1px solid #eee;
+            text-align: left;
         }
         
         .condition-grid {
@@ -536,18 +570,22 @@ const generatePrintableHtml = (act) => {
             grid-template-columns: 1fr 1fr;
             gap: 10px;
             margin: 8px 0;
+            text-align: left;
         }
         .condition-column {
             display: flex;
             flex-direction: column;
             gap: 5px;
+            text-align: left;
         }
         
         .signatures {
             margin-top: 15px;
+            text-align: left;
         }
         .signature-item {
             margin: 8px 0;
+            text-align: left;
         }
         .signature-line {
             border-top: 1px solid #000;
@@ -555,6 +593,7 @@ const generatePrintableHtml = (act) => {
             padding-top: 2px;
             font-size: 10px;
             width: 800px;
+            text-align: left;
         }
         .signature-label {
             text-align: center;
@@ -567,9 +606,11 @@ const generatePrintableHtml = (act) => {
             font-size: 8px;
             color: #666;
             line-height: 1.1;
+            text-align: left;
         }
         .footer-note {
             margin: 3px 0;
+            text-align: left;
         }
         h1 {
             font-size: 16px;
@@ -603,6 +644,7 @@ const generatePrintableHtml = (act) => {
                 padding: 5px;
                 margin: 0; 
                 font-size: 10px;
+                text-align: left;
             }
             .no-print { display: none; }
             .header, table, .equipment-grid, .signatures, .condition-grid {
@@ -624,17 +666,15 @@ const generatePrintableHtml = (act) => {
         </div>
     </div>
 
-    <div class=".company-info">
-        <div class="company-info">
-            ООО «Симпл Вэй» ОГРН: 122250000047. ИНН: 2543164502. КПП: 254301001<br>
-            690108 г. Владивосток, Вилкова, 5А
-        </div>
+    <div class="company-info">
+        ООО «Симпл Вэй» ОГРН: 122250000047. ИНН: 2543164502. КПП: 254301001<br>
+        690108 г. Владивосток, Вилкова, 5А
+    </div>
 <br><br><br><br>
-        <div class="header">
-            <h1>АКТ ПРИЕМА-ПЕРЕДАЧИ</h1>
-            <br>
-            <h2>К Договору № ${act.contractNumber || ''}</h2>
-        </div>
+    <div class="header">
+        <h1>АКТ ПРИЕМА-ПЕРЕДАЧИ</h1>
+        <h2>К Договору № ${act.contractNumber || ''}</h2>
+    </div>
         <br>
         <table>
             <tr>
@@ -668,13 +708,13 @@ const generatePrintableHtml = (act) => {
                 <td>${act.color || ''}</td>
             </tr>
             <tr>
+                <th>Локация</th>
                 <th>Год выпуска</th>
-                <th></th>
                 <th></th>
             </tr>
             <tr>
+                <td>${act.location || ''}</td>
                 <td>${act.year || ''}</td>
-                <td></td>
                 <td></td>
             </tr>
         </table>
@@ -689,10 +729,7 @@ const generatePrintableHtml = (act) => {
         </div>
         <br>
         <div class="section-title">Уровень топлива: ${act.fuelLevel || '0%'}</div>
-<<<<<<< HEAD
 
-=======
->>>>>>> main_repo/main
         <div class="condition-grid">
             <div class="condition-column">
                 <div class="section-title">Перечень внутренних вложений в а/м:</div>

@@ -10,9 +10,9 @@ async function main() {
   await prisma.inspectionDamage.deleteMany();
   await prisma.inspection.deleteMany();
   await prisma.vehicle.deleteMany();
-  // await prisma.carModel.deleteMany();    // ← ЗАКОММЕНТИРОВАТЬ
-  // await prisma.carBrand.deleteMany();    // ← ЗАКОММЕНТИРОВАТЬ
   await prisma.user.deleteMany();
+  await prisma.vehicleAct.deleteMany();
+  await prisma.photo.deleteMany();
 
   // Создаем тестового пользователя-приемосдатчика
   const hashedPassword = await bcrypt.hash('password123', 10);
@@ -29,62 +29,87 @@ async function main() {
 
   console.log('Created test user:', user);
 
-  // ЗАКОММЕНТИРОВАТЬ весь блок создания марок и моделей ↓
-  /*
-  // Создаем марки автомобилей
-  const toyota = await prisma.carBrand.create({
-    data: { name: 'Toyota' }
-  });
-
-  const honda = await prisma.carBrand.create({
-    data: { name: 'Honda' }
-  });
-
-  console.log('Created car brands:', { toyota, honda });
-
-  // Создаем модели автомобилей
-  const camry = await prisma.carModel.create({
-    data: {
-      name: 'Camry',
-      brandId: toyota.id
+  // Создаем марки и модели автомобилей
+  const brandsData = [
+    {
+      name: 'Toyota',
+      models: ['Camry', 'Corolla', 'RAV4', 'Land Cruiser', 'Hilux', 'Prius']
+    },
+    {
+      name: 'Honda', 
+      models: ['Accord', 'Civic', 'CR-V', 'Pilot', 'Fit', 'HR-V']
+    },
+    {
+      name: 'Nissan',
+      models: ['Qashqai', 'X-Trail', 'Patrol', 'Almera', 'Note', 'Juke']
+    },
+    {
+      name: 'Hyundai',
+      models: ['Solaris', 'Elantra', 'Tucson', 'Santa Fe', 'Creta', 'Sonata']
+    },
+    {
+      name: 'Kia',
+      models: ['Rio', 'Optima', 'Sportage', 'Sorento', 'Cerato', 'Stinger']
     }
-  });
+  ];
 
-  const civic = await prisma.carModel.create({
-    data: {
-      name: 'Civic',
-      brandId: honda.id
-    }
-  });
+  for (const brandData of brandsData) {
+    const brand = await prisma.carBrand.create({
+      data: {
+        name: brandData.name,
+        models: {
+          create: brandData.models.map(modelName => ({
+            name: modelName
+          }))
+        }
+      }
+    });
+    console.log(`Created brand: ${brand.name}`);
+  }
 
-  console.log('Created car models:', { camry, civic });
+  // Создаем направления перевозок
+  const directions = [
+    'Москва', 'Санкт-Петербург', 'Новосибирск', 'Екатеринбург', 'Казань',
+    'Нижний Новгород', 'Красноярск', 'Челябинск', 'Самара', 'Уфа'
+  ];
 
-  // Создаем тестовое транспортное средство
-  const testVehicle = await prisma.vehicle.create({
-    data: {
-      vin: 'ABC123456789DEF01',
-      licensePlate: 'А123ВС77',
-      modelId: camry.id,
-      year: 2022,
-      color: 'Черный'
-    }
-  });
+  for (const name of directions) {
+    await prisma.direction.create({
+      data: { name }
+    });
+    console.log(`Created direction: ${name}`);
+  }
 
-  console.log('Created test vehicle:', testVehicle);
+  // Создаем способы перевозки
+  const transportMethods = [
+    'Автотранспорт', 'Железнодорожный транспорт', 'Авиаперевозка',
+    'Морской транспорт', 'Речной транспорт', 'Мультимодальная перевозка'
+  ];
 
-  // Создаем тестовый осмотр
-  const inspection = await prisma.inspection.create({
-    data: {
-      vehicleId: testVehicle.id,
-      status: 'COMPLETED',
-      notes: 'Тестовый осмотр транспортного средства',
-      createdById: user.id
-    }
-  });
+  for (const name of transportMethods) {
+    await prisma.transportMethod.create({
+      data: { name }
+    });
+    console.log(`Created transport method: ${name}`);
+  }
 
-  console.log('Created test inspection:', inspection);
-  */
-  // КОНЕЦ комментария ↑
+  // Создаем локации
+  const locations = [
+    { name: "Склад Северный", address: "ул. Северная, 1" },
+    { name: "Склад Южный", address: "ул. Южная, 15" },
+    { name: "Склад Центральный", address: "ул. Центральная, 25" },
+    { name: "Терминал Восточный", address: "ул. Восточная, 42" },
+    { name: "Логистический центр Западный", address: "ул. Западная, 7" }
+  ];
+
+  for (const location of locations) {
+    await prisma.location.create({
+      data: location
+    });
+    console.log(`Created location: ${location.name}`);
+  }
+
+  console.log('Seed completed successfully!');
 }
 
 main()
