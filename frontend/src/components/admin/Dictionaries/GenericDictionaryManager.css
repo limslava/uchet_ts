@@ -1,0 +1,33 @@
+.dictionary-manager {
+  padding: 16px;
+}
+
+.dictionary-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.dictionary-header h2 {
+  margin: 0;
+  color: #1f2937;
+  text-align: center;
+  flex: 1;
+}
+
+.dictionary-filters {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 20px;
+  align-items: flex-end;
+  flex-wrap: wrap;
+}
+
+.table-header {
+  text-align: center;
+}
+
+.table-cell {
+  text-align: center;
+}

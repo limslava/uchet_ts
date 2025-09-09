@@ -75,3 +75,138 @@ markdown
 - **Авиаперевозка** - номер рейса, аэропорт назначения  
 - **Морской транспорт** - название судна, порт назначения
 - **Мультимодальная** - комбинация полей в зависимости от этапов
+
+`markdown
+ARCHITECTURE.md` (обновленный)
+
+```markdown
+# 🏗️ Архитектура системы Uchet_TS
+
+## 📊 Обзор системы
+
+Uchet_TS - система учета транспортных средств с модульной архитектурой на React + Node.js.
+
+## 🔧 Компонентная диаграмма
+┌─────────────────┐ REST API ┌──────────────────┐
+│ React Frontend │ ◄─────────────►│ Express Backend │
+│ │ │ │
+│ - Components │ │ - Controllers │
+│ - Pages │ │ - Routes │
+│ - Services │ │ - Middleware │
+└─────────────────┘ └─────────┬────────┘
+│
+│ Prisma ORM
+│
+┌─────────▼─────────┐
+│ PostgreSQL │
+│ Database │
+└───────────────────┘
+
+text
+
+## 🧩 Модульная структура
+
+### Frontend (React 19+)
+- **Components** - Переиспользуемые UI компоненты
+- **Pages** - Страницы приложения  
+- **Services** - API вызовы и бизнес-логика
+- **Hooks** - Кастомные React хуки
+- **Styles** - Глобальные стили и CSS переменные
+
+### Backend (Node.js + Express) - НОВАЯ СТРУКТУРА
+- **Routes** - Обработчики HTTP запросов (разделены по функциональности)
+- **Controllers** - Логика обработки запросов (разделены по функциональности)
+- **Middleware** - Аутентификация, вализация, CORS (разделены по типам)
+- **Services** - Бизнес-логика и утилиты (разделены по функциональности)
+- **Utils** - Вспомогательные функции
+- **Config** - Конфигурационные файлы
+- **Prisma** - Слой работы с базой данных
+
+### База данных (PostgreSQL)
+- **Модели данных** - Пользователи, ТС, акты, фото
+- **Миграции** - Управление изменениями схемы
+- **Сидеры** - Тестовые данные
+
+## 📡 Потоки данных
+
+1. **Аутентификация** → JWT токены → Защищенные маршруты
+2. **Создание акта** → Валидация → Сохранение в БД → Генерация QR
+3. **Сканирование QR** → Поиск акта → Подтверждение приема
+4. **Экспорт данных** → Генерация документов → Скачивание
+
+## 🔌 Интеграции
+
+- **HTML5 QR Code Scanner** - Мобильное сканирование
+- **Docx-templates** - Генерация Word документов  
+- **Multer** - Загрузка файлов
+- **JWT** - Аутентификация
+- **Prisma** - ORM для PostgreSQL
+
+## 🎯 Ключевые особенности
+
+- 🔐 Ролевая модель (ADMIN, MANAGER, RECEIVER)
+- 📱 Адаптивный дизайн для мобильных устройств
+- 🖨️ Экспорт в DOCX и печатные формы
+- 📸 Загрузка фотографий с камеры
+- 🔄 Поддержка повторяющихся VIN
+- 🏢 Выбор локации для пользователей
+
+**Версия архитектуры**: 2.1.0 | **Обновлено**: 2025-09-08
+
+```markdown
+# System Architecture
+
+## Overview
+Система учета транспортных средств с приемосдатчиками и администраторами.
+
+## Frontend Architecture
+src/
+├── components/
+│ ├── auth/ # Authentication components
+│ ├── common/ # Reusable UI components
+│ └── vehicle/ # Vehicle-related components
+├── pages/ # Page components
+├── services/ # API services
+├── hooks/ # Custom React hooks
+└── styles/ # Global styles
+
+text
+
+## Backend Architecture (Prisma)
+models/
+├── User # Пользователи системы
+├── Location # Локации/склады
+├── VehicleAct # Акт приема-передачи
+├── Vehicle # Транспортные средства
+├── Inspection # Осмотры ТС
+├── DamageType # Типы повреждений
+└── Dictionaries # Справочники
+
+text
+
+## Data Flow
+1. User Login → JWT Token
+2. Location Selection → User context
+3. Vehicle Act Creation → PDF/QR generation
+4. Photo Upload → Cloud storage
+5. Print/Export → PDF generation
+
+## Security
+- JWT Authentication
+- Role-based access control
+- Input validation
+- File upload restrictions
+
+markdown
+## 🏗️ Модульная структура Backend
+
+### Контроллеры администратора:
+- `UserAdminController` - управление пользователями
+- `DictionaryAdminController` - управление справочниками
+- `AnalyticsAdminController` - аналитика и отчеты
+
+### Справочники включают:
+- Марки и модели автомобилей
+- Направления перевозок (города)
+- Способы перевозки
+- Локации/склады

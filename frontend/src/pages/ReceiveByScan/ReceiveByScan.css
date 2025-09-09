@@ -1,0 +1,85 @@
+.receive-by-scan {
+  padding: 20px;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.scan-result {
+  margin-top: 20px;
+  padding: 20px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  background-color: #f9f9f9;
+}
+
+.act-details {
+  margin-bottom: 20px;
+}
+
+.act-details p {
+  margin: 8px 0;
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+.act-details strong {
+  color: #333;
+  min-width: 120px;
+  display: inline-block;
+}
+
+.action-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  align-items: center;
+  margin-top: 20px;
+}
+
+.btn-primary,
+.btn-secondary,
+.btn-back {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 4px;
+  font-size: 16px;
+  cursor: pointer;
+  margin: 5px;
+  width: 200px;
+}
+
+.btn-primary {
+  background-color: #28a745;
+  color: white;
+}
+
+.btn-primary:hover {
+  background-color: #218838;
+}
+
+.btn-secondary {
+  background-color: #6c757d;
+  color: white;
+}
+
+.btn-secondary:hover {
+  background-color: #545b62;
+}
+
+.btn-back {
+  background-color: #ffc107;
+  color: black;
+}
+
+.btn-back:hover {
+  background-color: #e0a800;
+}
+
+.error {
+  color: #dc3545;
+  padding: 10px;
+  border: 1px solid #dc3545;
+  border-radius: 4px;
+  background-color: #f8d7da;
+  margin: 10px 0;
+}

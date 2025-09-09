@@ -1,0 +1,27 @@
+export const USER_ROLES = {
+  ADMIN: 'ADMIN',
+  MANAGER: 'MANAGER', 
+  RECEIVER: 'RECEIVER'
+};
+
+export const VEHICLE_ACT_STATUS = {
+  NEW: 'NEW',
+  RECEIVED: 'RECEIVED',
+  COMPLETED: 'COMPLETED',
+  CANCELLED: 'CANCELLED'
+};
+
+export const FUEL_LEVEL = {
+  EMPTY: 'EMPTY',
+  QUARTER: 'QUARTER',
+  HALF: 'HALF',
+  THREE_QUARTERS: 'THREE_QUARTERS',
+  FULL: 'FULL'
+};
+
+export const INSPECTION_TIME = {
+  DAY: 'DAY',
+  NIGHT: 'NIGHT',
+  RAIN: 'RAIN',
+  SNOW: 'SNOW'
+};

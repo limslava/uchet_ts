@@ -1,6 +1,5 @@
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'https://192.168.0.121:5000';
 
-// Функция для выполнения запросов с авторизацией
 async function request(url, options = {}) {
   const token = localStorage.getItem('token');
   const headers = {
@@ -17,7 +16,6 @@ async function request(url, options = {}) {
     headers,
   });
 
-  // Обработка ошибки 401 (Unauthorized)
   if (response.status === 401) {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
@@ -32,12 +30,10 @@ async function request(url, options = {}) {
   return response.json();
 }
 
-// Получить акт по ID
 export const getVehicleActById = async (id) => {
   return request(`/vehicle-acts/${id}`);
 };
 
-// Подтвердить прием ТС
 export const confirmVehicleReceipt = async (actId) => {
   return request(`/vehicle-acts/${actId}/receive`, {
     method: 'POST',
@@ -45,7 +41,6 @@ export const confirmVehicleReceipt = async (actId) => {
   });
 };
 
-// Другие функции API
 export const login = async (email, password) => {
   const response = await fetch(`${API_BASE_URL}/api/auth/login`, {
     method: 'POST',
@@ -63,45 +58,10 @@ export const login = async (email, password) => {
 };
 
 export const selectLocation = async (userId, locationId) => {
-  try {
-    const token = localStorage.getItem('token');
-    
-    console.log('Token from localStorage:', token);
-    
-    if (!token || token === 'null' || token === 'undefined') {
-      throw new Error('Токен не найден в localStorage');
-    }
-
-    const response = await fetch(`${API_BASE_URL}/api/auth/${userId}/location`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`,
-      },
-      body: JSON.stringify({ locationId }),
-    });
-
-    if (response.status === 401) {
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
-      window.location.href = '/login';
-      throw new Error('Сессия истекла. Пожалуйста, войдите снова.');
-    }
-
-    if (response.status === 403) {
-      const errorData = await response.json();
-      throw new Error(errorData.error || 'Недостаточно прав для выполнения операции');
-    }
-
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-
-    return response.json();
-  } catch (error) {
-    console.error('Error in selectLocation:', error);
-    throw error;
-  }
+  return request(`/api/auth/${userId}/location`, {
+    method: 'POST',
+    body: JSON.stringify({ locationId }),
+  });
 };
 
 export const getCarBrands = async () => {
@@ -127,7 +87,6 @@ export const createVehicleAct = async (formData) => {
     body: formData,
   });
 
-  // Обработка ошибки 401 и для этого запроса
   if (response.status === 401) {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
@@ -142,7 +101,6 @@ export const createVehicleAct = async (formData) => {
   return response.json();
 };
 
-// Добавим функцию для получения информации о текущем пользователе
 export const getCurrentUser = async () => {
   return request('/api/auth/me');
 };

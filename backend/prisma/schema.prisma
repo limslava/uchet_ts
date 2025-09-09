@@ -58,6 +58,7 @@ model CarBrand {
 model CarModel {
   id          Int          @id @default(autoincrement())
   name        String
+  bodyType    String?      // ДОБАВЛЕНО: тип кузова
   createdAt   DateTime     @default(now())
   brandId     Int
   brand       CarBrand     @relation(fields: [brandId], references: [id], onDelete: Cascade)
@@ -128,6 +129,7 @@ model Location {
   id        Int      @id @default(autoincrement())
   name      String   @unique
   address   String
+  city      String?   // Измените на String? (необязательное)
   isActive  Boolean  @default(true)
   createdAt DateTime @default(now())
 
@@ -136,7 +138,6 @@ model Location {
 
   @@map("locations")
 }
-
 
 enum InspectionTime {
   DAY

@@ -1,0 +1,171 @@
+.qr-scanner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 15px;
+  width: 100%;
+  justify-content: center;
+  min-height: 50vh;
+  position: relative;
+}
+
+#qr-reader {
+  width: 100% !important;
+  max-width: 400px;
+  transform: scale(0.9);
+  transform-origin: top center;
+  margin: 0 auto;
+  position: relative;
+  z-index: 1;
+}
+
+/* Уменьшаем окно камеры на мобильных устройствах */
+@media (max-width: 768px) {
+  #qr-reader {
+    max-width: 300px;
+    max-height: 300px;
+    transform: scale(0.9);
+    margin: 0 auto;
+  }
+}
+
+.scanner-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+  max-width: 300px;
+  margin: 20px auto;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+  z-index: 1000; /* Важно: поднимаем над камерой */
+}
+
+.scanner-btn {
+  padding: 12px 20px;
+  border: none;
+  border-radius: 4px;
+  font-size: 16px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+  width: 100%;
+  max-width: 250px;
+}
+
+/* Стили как в старом коде */
+.camera-btn {
+  background-color: #007bff;
+  color: white;
+}
+
+.camera-btn:hover {
+  background-color: #0056b3;
+}
+
+.gallery-btn {
+  background-color: #6c757d;
+  color: white;
+}
+
+.gallery-btn:hover {
+  background-color: #545b62;
+}
+
+.stop-btn {
+  background-color: #dc3545;
+  color: white;
+  margin-top: 20px;
+  position: relative;
+  z-index: 1001; /* Еще выше чем контейнер */
+}
+
+.stop-btn:hover {
+  background-color: #c82333;
+}
+
+.start-btn {
+  background-color: #28a745;
+  color: white;
+}
+
+.start-btn:hover {
+  background-color: #218838;
+}
+
+.back-btn {
+  background-color: #ffc107;
+  color: black;
+}
+
+.back-btn:hover {
+  background-color: #e0a800;
+}
+
+.camera-select {
+  padding: 10px;
+  border-radius: 4px;
+  border: 1px solid #ced4da;
+  font-size: 14px;
+  width: 100%;
+  max-width: 250px;
+  margin: 0 auto;
+}
+
+/* Скрываем встроенные кнопки сканера */
+#qr-reader__dashboard_section {
+  display: none !important;
+}
+
+#qr-reader__camera_permission_button_id,
+#qr-reader__dashboard_section_swaplink {
+  display: none !important;
+}
+
+.camera-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  position: relative;
+}
+
+/* Контейнер для кнопки остановки, который всегда виден */
+.stop-button-container {
+  position: relative;
+  z-index: 1000;
+  margin-top: 20px;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
+
+/* Адаптивность для мобильных устройств */
+@media (max-width: 768px) {
+  .qr-scanner {
+    min-height: 40vh;
+    gap: 10px;
+  }
+  
+  .scanner-controls {
+    margin: 10px auto;
+    gap: 8px;
+  }
+  
+  .scanner-btn {
+    max-width: 220px;
+    padding: 10px 16px;
+    font-size: 14px;
+  }
+  
+  .stop-btn {
+    margin-top: 15px;
+    padding: 10px 16px;
+    font-size: 14px;
+  }
+  
+  .stop-button-container {
+    margin-top: 15px;
+  }
+}

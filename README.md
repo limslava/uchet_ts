@@ -303,3 +303,78 @@ markdown
 ## ⚠️ Известные проблемы
 - ~~Выравнивание текста в печатной форме акта требует доработки~~ ✅ ИСПРАВЛЕНО
 - ~~Интерфейс выбора камеры в сканере QR-кодов работает нестабильно~~ ✅ ИСПРАВЛЕНО
+
+# Uchet TS - Система учета транспортных средств
+
+Система для приемосдатчиков и администраторов для управления приемом-передачей транспортных средств.
+
+## Features
+
+- 🔐 Role-based authentication (Admin, Manager, Receiver)
+- 📍 Multi-location support
+- 📝 Vehicle act creation with photos
+- 📷 QR code scanning
+- 🖨️ PDF generation and printing
+- 📱 Responsive design
+
+## Tech Stack
+
+### Frontend
+- React 18
+- React Router
+- React Hook Form
+- Axios for API calls
+- CSS3 with Flexbox/Grid
+
+### Backend
+- Node.js + Express
+- PostgreSQL + Prisma
+- JWT authentication
+- Multer for file uploads
+
+## Quick Start
+
+1. Install dependencies:
+```bash
+npm install
+Set up environment variables:
+
+env
+REACT_APP_API_URL=http://localhost:5000
+Start development server:
+
+bash
+npm start
+Available Scripts
+npm start - Development server
+
+npm build - Production build
+
+npm test - Run tests
+
+npm run eject - Eject from Create React App
+
+Project Structure
+text
+src/
+├── components/     # Reusable components
+├── pages/         # Page components
+├── services/      # API services
+├── hooks/         # Custom hooks
+└── styles/        # Global styles
+License
+MIT License - see LICENSE file for details
+
+## 🚀 Новые возможности v2.2.0
+
+### Панель администратора:
+- 📊 Управление пользователями и ролями
+- 🗃️ Полное управление системными справочниками
+- 🔍 Поиск и фильтрация во всех разделах
+- ✅ Валидация данных и обработка ошибок
+
+### Доступные справочники:
+- 🚗 Марки и модели автомобилей
+- 🏙️ Направления (города)
+- 🚛 Способы перевозки
+- 🏢 Локации и склады

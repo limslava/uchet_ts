@@ -1,0 +1,73 @@
+.data-table-container {
+  overflow-x: auto;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+/* ЗАМЕНИТЕ эти стили: */
+.data-table th {
+  background-color: #f8f9fa;
+  padding: 12px;
+  text-align: center; /* ИЗМЕНИТЕ НА center */
+  font-weight: 600;
+  color: #495057;
+  border-bottom: 2px solid #e9ecef;
+}
+
+.data-table td {
+  padding: 12px;
+  border-bottom: 1px solid #e9ecef;
+  color: #212529;
+  text-align: center; /* ДОБАВЬТЕ ЭТО */
+}
+
+/* УДАЛИТЕ эти строки (они не нужны): */
+/*
+.table-header {
+  text-align: center;
+}
+
+.table-cell {
+  text-align: center;
+}
+*/
+
+.data-table tbody tr:hover {
+  background-color: #f8f9fa;
+  cursor: pointer;
+}
+
+.data-table tbody tr.selected {
+  background-color: #e3f2fd;
+}
+
+.data-table-loading,
+.data-table-empty {
+  padding: 40px;
+  text-align: center;
+  background: white;
+  border-radius: 8px;
+  color: #6c757d;
+}
+
+.loading-spinner {
+  border: 3px solid #f3f3f3;
+  border-top: 3px solid #007bff;
+  border-radius: 50%;
+  width: 30px;
+  height: 30px;
+  animation: spin 1s linear infinite;
+  margin: 0 auto 16px;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
