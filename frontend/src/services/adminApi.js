@@ -43,9 +43,21 @@ getUsers: (params) => api.get('/api/admin/users', { params }),
   getLocations: (params) => api.get('/api/admin/dictionaries/locations', { params }),
   createLocation: (data) => api.post('/api/admin/dictionaries/locations', data),
 
+   // Новые методы для печати
+  printVehicleAct: (id) => api.get(`/api/admin/vehicle-acts/${id}/print`),
+  printContract: (id) => api.get(`/api/admin/vehicle-acts/${id}/print-contract`),
+
   // Аналитика
   getDashboardStats: () => api.get('/api/admin/analytics/stats'),
   getSettings: () => api.get('/api/admin/settings'),
+
+  // Добавить в экспорт adminApi:
+getVehicleActs: (params) => api.get('/api/admin/vehicle-acts', { params }),
+getVehicleAct: (id) => api.get(`/api/admin/vehicle-acts/${id}`),
+updateVehicleAct: (id, data) => api.put(`/api/admin/vehicle-acts/${id}`, data),
+deleteVehicleAct: (id) => api.delete(`/api/admin/vehicle-acts/${id}`),
 };
+
+
 
 export default adminApi;

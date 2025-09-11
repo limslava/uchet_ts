@@ -5,6 +5,7 @@ import { CarBrandsManager } from '../../components/admin/Dictionaries/CarBrandsM
 import { DirectionsManager } from '../../components/admin/Dictionaries/DirectionsManager';
 import { TransportMethodsManager } from '../../components/admin/Dictionaries/TransportMethodsManager';
 import { LocationsManager } from '../../components/admin/Dictionaries/LocationsManager';
+import { VehicleActsManager } from '../../components/admin/VehicleActs/VehicleActsManager';
 import './DictionaryManagement.css';
 
 export const DictionaryManagement = () => {
@@ -15,7 +16,8 @@ export const DictionaryManagement = () => {
     { id: 'car-brands', label: 'Марки и модели', icon: '🚗' },
     { id: 'directions', label: 'Направления', icon: '🧭' },
     { id: 'transport-methods', label: 'Способы перевозки', icon: '🚚' },
-    { id: 'locations', label: 'Локации', icon: '🏢' }
+    { id: 'locations', label: 'Локации', icon: '🏢' },
+    { id: 'vehicle-acts', label: 'Акты приёмки', icon: '📋' }
   ];
 
   if (!canManageDictionaries) {
@@ -39,6 +41,8 @@ export const DictionaryManagement = () => {
         return <TransportMethodsManager />;
       case 'locations':
         return <LocationsManager />;
+      case 'vehicle-acts':
+        return <VehicleActsManager />;
       default:
         return <CarBrandsManager />;
     }

@@ -1,29 +1,33 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Button } from '../../common/Button/Button';
+import { CameraModal } from './CameraModal';
 
 export const PhotoUploader = ({ 
   photos, 
   setPhotos, 
-  isTakingPhotos, 
-  setIsTakingPhotos, 
   fileInputRef, 
   disabled,
-  handleTakePhotos,
   handleSelectFromGallery,
   handleFileChange
 }) => {
+  const [isCameraOpen, setIsCameraOpen] = useState(false);
+
+  const handleCameraPhotos = (newPhotos) => {
+    setPhotos(prev => [...prev, ...newPhotos]);
+  };
+
   return (
     <div className="form-group">
       <label>Фотографии</label>
       <div className="photo-buttons">
         <Button 
           type="button" 
-          onClick={handleTakePhotos} 
-          disabled={isTakingPhotos || disabled} 
+          onClick={() => setIsCameraOpen(true)} 
+          disabled={disabled} 
           variant="primary"
           className="photo-btn"
         >
-          {isTakingPhotos ? 'Съемка...' : 'Сделать фотографии'}
+          Сделать фотографии
         </Button>
         
         <input 
@@ -77,6 +81,13 @@ export const PhotoUploader = ({
             ))}
           </div>
         </div>
+      )}
+
+      {isCameraOpen && (
+        <CameraModal
+          onClose={() => setIsCameraOpen(false)}
+          onPhotosTaken={handleCameraPhotos}
+        />
       )}
     </div>
   );

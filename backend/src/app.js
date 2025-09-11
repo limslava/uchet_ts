@@ -10,6 +10,7 @@ import adminUsersRoutes from './routes/admin/users.js';
 import adminDictionariesRoutes from './routes/admin/dictionaries.js';
 import adminAnalyticsRoutes from './routes/admin/analytics.js';
 import adminSettingsRoutes from './routes/admin/settings.js';
+import vehicleActAdminRoutes from './routes/admin/vehicleActs.js';
 
 // Routes
 import authRoutes from './routes/auth/authRoutes.js';
@@ -46,6 +47,7 @@ app.use('/api/admin/dictionaries', adminDictionariesRoutes);
 app.use('/api/admin/analytics', adminAnalyticsRoutes);
 app.use('/api/admin/settings', adminSettingsRoutes);
 app.use('/api', dictionaryRoutes);
+app.use('/api/admin/vehicle-acts', vehicleActAdminRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {

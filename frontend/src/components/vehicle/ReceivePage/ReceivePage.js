@@ -38,6 +38,7 @@ export default function ReceivePage() {
   const [currentActId, setCurrentActId] = useState(null);
   const [validationErrors, setValidationErrors] = useState({});
   const currentVin = watch('vin');
+  
 
   useEffect(() => {
     console.log('Validation errors:', validationErrors);
@@ -304,15 +305,6 @@ export default function ReceivePage() {
     setIsTakingPhotos(false);
   };
 
-  const handleTakePhotos = () => {
-    setIsTakingPhotos(true);
-    if (fileInputRef.current) {
-      fileInputRef.current.setAttribute('multiple', 'true');
-      fileInputRef.current.setAttribute('capture', 'environment');
-      fileInputRef.current.click();
-    }
-  };
-
   const handleSelectFromGallery = () => {
     if (fileInputRef.current) {
       fileInputRef.current.setAttribute('multiple', 'true');
@@ -390,87 +382,101 @@ export default function ReceivePage() {
   };
 
   const handleTransferConfirm = async () => {
-    if (!submittedData) return;
+  if (!submittedData) return;
+  
+  const formErrors = validateForm(submittedData);
+  if (Object.keys(formErrors).length > 0) {
+    setValidationErrors(formErrors);
+    setShowTransferDialog(false);
+    return;
+  }
+  
+  try {
+    setIsSubmitting(true);
+    const token = localStorage.getItem('token');
     
-    const formErrors = validateForm(submittedData);
-    if (Object.keys(formErrors).length > 0) {
-      setValidationErrors(formErrors);
-      setShowTransferDialog(false);
-      return;
-    }
+    const multipartData = new FormData();
     
-    try {
-      setIsSubmitting(true);
-      const token = localStorage.getItem('token');
-      
-      const multipartData = new FormData();
-      
-      multipartData.append('date', submittedData.date);
-      multipartData.append('principal', submittedData.principal);
-      multipartData.append('sender', submittedData.sender);
-      multipartData.append('directionId', submittedData.directionId);
-      multipartData.append('transportMethodId', submittedData.transportMethodId);
-      multipartData.append('vin', submittedData.vin);
-      multipartData.append('licensePlate', submittedData.licensePlate);
-      multipartData.append('carBrandId', submittedData.carBrandId);
-      multipartData.append('carModelId', submittedData.carModelId);
-      multipartData.append('color', submittedData.color);
-      multipartData.append('year', submittedData.year.toString());
-      multipartData.append('externalCondition', submittedData.externalCondition);
-      multipartData.append('interiorCondition', submittedData.interiorCondition);
-      multipartData.append('paintInspectionImpossible', submittedData.paintInspectionImpossible.toString());
-      multipartData.append('internalContents', submittedData.internalContents);
-      multipartData.append('fuelLevel', submittedData.fuelLevel);
-      multipartData.append('equipment', JSON.stringify(submittedData.equipment));
-      multipartData.append('inspectionTime', submittedData.inspectionTime);
-      
-      photos.forEach((file) => {
-        multipartData.append('photos', file);
-      });
+    multipartData.append('date', submittedData.date);
+    multipartData.append('principal', submittedData.principal);
+    multipartData.append('sender', submittedData.sender);
+    multipartData.append('directionId', submittedData.directionId);
+    multipartData.append('transportMethodId', submittedData.transportMethodId);
+    multipartData.append('vin', submittedData.vin);
+    multipartData.append('licensePlate', submittedData.licensePlate);
+    multipartData.append('carBrandId', submittedData.carBrandId);
+    multipartData.append('carModelId', submittedData.carModelId);
+    multipartData.append('color', submittedData.color);
+    multipartData.append('year', submittedData.year.toString());
+    multipartData.append('externalCondition', submittedData.externalCondition);
+    multipartData.append('interiorCondition', submittedData.interiorCondition);
+    multipartData.append('paintInspectionImpossible', submittedData.paintInspectionImpossible.toString());
+    multipartData.append('internalContents', submittedData.internalContents);
+    multipartData.append('fuelLevel', submittedData.fuelLevel);
+    multipartData.append('equipment', JSON.stringify(submittedData.equipment));
+    multipartData.append('inspectionTime', submittedData.inspectionTime);
+    
+    photos.forEach((file) => {
+      multipartData.append('photos', file);
+    });
 
-      const response = await fetch(`${API_URL}/vehicle-acts`, {
-        method: 'POST',
-        headers: { 
-          'Authorization': `Bearer ${token}`
-        },
-        body: multipartData,
-      });
+    // Создаем акт
+    const response = await fetch(`${API_URL}/vehicle-acts`, {
+      method: 'POST',
+      headers: { 
+        'Authorization': `Bearer ${token}`
+      },
+      body: multipartData,
+    });
 
-      if (response.status === 401) {
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
-        window.location.href = '/login';
-        throw new Error('Сессия истекла');
-      }
-
-      if (!response.ok) {
-        throw new Error('Ошибка создания акта');
-      }
-
-      const responseData = await response.json();
-      setCurrentActId(responseData.id);
-      setShowPrintButtons(true);
-      setQr(responseData.id);
-      setPhotos([]);
-      setShowTransferDialog(false);
-      setSubmittedData(null);
-      setFormSubmitted(true);
-      setValidationErrors({});
-      
-    } catch (err) {
-      console.error('Full error:', err);
-      
-      if (err.message === 'Сессия истекла') {
-        alert('Сессия истекла. Пожалуйста, войдите снова.');
-      } else if (err.message.includes('Failed to fetch')) {
-        alert('Ошибка: Бэкенд сервер не запущен');
-      } else {
-        alert('Неизвестная ошибка: ' + err.message);
-      }
-    } finally {
-      setIsSubmitting(false);
+    if (response.status === 401) {
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      window.location.href = '/login';
+      throw new Error('Сессия истекла');
     }
-  };
+
+    if (!response.ok) {
+      throw new Error('Ошибка создания акта');
+    }
+
+    const responseData = await response.json();
+    setCurrentActId(responseData.id);
+    
+    // Автоматически подтверждаем прием ТС
+    const receiveResponse = await fetch(`${API_URL}/vehicle-acts/${responseData.id}/receive`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    });
+
+    if (!receiveResponse.ok) {
+      console.error('Ошибка подтверждения приема ТС');
+    }
+
+    setShowPrintButtons(true);
+    setQr(responseData.id);
+    setPhotos([]);
+    setShowTransferDialog(false);
+    setSubmittedData(null);
+    setFormSubmitted(true);
+    setValidationErrors({});
+    
+  } catch (err) {
+    console.error('Full error:', err);
+    
+    if (err.message === 'Сессия истекла') {
+      alert('Сессия истекла. Пожалуйста, войдите снова.');
+    } else if (err.message.includes('Failed to fetch')) {
+      alert('Ошибка: Бэкенд сервер не запущен');
+    } else {
+      alert('Неизвестная ошибка: ' + err.message);
+    }
+  } finally {
+    setIsSubmitting(false);
+  }
+};
 
   const handleTransferCancel = () => {
     setShowTransferDialog(false);
@@ -815,7 +821,6 @@ export default function ReceivePage() {
           setIsTakingPhotos={setIsTakingPhotos}
           fileInputRef={fileInputRef}
           disabled={formSubmitted}
-          handleTakePhotos={handleTakePhotos}
           handleSelectFromGallery={handleSelectFromGallery}
           handleFileChange={handleFileChange}
         />

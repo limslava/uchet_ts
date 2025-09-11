@@ -5,7 +5,7 @@ import './AdminNav.css';
 
 export const AdminNav = () => {
   const location = useLocation();
-  const { isAdmin, canManageUsers, canManageDictionaries } = useAdmin();
+  const { isAdmin, isAdminOrManager, canManageUsers, canManageDictionaries } = useAdmin();
 
   const isActive = (path) => {
     return location.pathname === path || location.pathname.startsWith(path + '/');
@@ -17,6 +17,12 @@ export const AdminNav = () => {
       label: 'Обзор',
       icon: '📊',
       show: true
+    },
+    {
+      path: '/admin/transport',
+      label: 'Перевозки',
+      icon: '🚛',
+      show: isAdminOrManager
     },
     {
       path: '/admin/users',

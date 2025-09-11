@@ -168,6 +168,11 @@ model VehicleAct {
   contractNumber          String          @unique
   date                    DateTime
   principal               String?
+  principalPhone      String?   // Телефон принципала
+  senderPhone         String?   // Телефон отправителя
+  principalPassport   String?   // Паспорт принципала
+  transportCost       Float?    // Стоимость перевозки
+  bodyType            String?   // Тип кузова
   sender                  String?
   directionId      Int?
   direction        Direction?      @relation(fields: [directionId], references: [id], onDelete: SetNull)

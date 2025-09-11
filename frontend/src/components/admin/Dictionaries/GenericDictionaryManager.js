@@ -10,8 +10,8 @@ export const GenericDictionaryManager = ({
   columns,
   data,
   loading,
-  pagination,
-  filters,
+  pagination = {}, // Добавляем значение по умолчанию
+  filters = {}, // Добавляем значение по умолчанию
   onFilterChange,
   onPageChange,
   onAdd,
@@ -25,22 +25,26 @@ export const GenericDictionaryManager = ({
     <div className="dictionary-manager">
       <div className="dictionary-header">
         <h2>{title}</h2>
-        <Button onClick={onAdd}>
-          + Добавить
-        </Button>
+        {onAdd && (
+          <Button onClick={onAdd}>
+            + Добавить
+          </Button>
+        )}
       </div>
 
-      <div className="dictionary-filters">
-        {showSearch && (
-          <Input
-            placeholder="Поиск..."
-            value={filters.search}
-            onChange={(value) => onFilterChange('search', value)}
-            style={{ width: '250px' }}
-          />
-        )}
-        {additionalFilters}
-      </div>
+      {(showSearch || additionalFilters) && (
+        <div className="dictionary-filters">
+          {showSearch && (
+            <Input
+              placeholder="Поиск..."
+              value={filters.search || ''}
+              onChange={(value) => onFilterChange?.('search', value)}
+              style={{ width: '250px' }}
+            />
+          )}
+          {additionalFilters}
+        </div>
+      )}
 
       <DataTable
         columns={columns}
@@ -49,12 +53,12 @@ export const GenericDictionaryManager = ({
         emptyMessage={emptyMessage}
       />
 
-      {pagination.pages > 1 && (
+      {pagination && pagination.pages > 1 && (
         <Pagination
-          currentPage={pagination.page}
-          totalPages={pagination.pages}
-          totalItems={pagination.total}
-          itemsPerPage={pagination.limit}
+          currentPage={pagination.page || 1}
+          totalPages={pagination.pages || 1}
+          totalItems={pagination.total || 0}
+          itemsPerPage={pagination.limit || 20}
           onPageChange={onPageChange}
         />
       )}

@@ -11,6 +11,7 @@ import DictionaryManagement from './pages/Admin/DictionaryManagement';
 import UserManagement from './components/admin/Users/UserManagement';
 import './App.css';
 import { AdminLayout } from './components/admin/AdminLayout/AdminLayout';
+import TransportManagement from './pages/Admin/TransportManagement';
 
 
 // Компонент для проверки роли и перенаправления
@@ -68,6 +69,12 @@ function App() {
               </Routes>
             </ProtectedRoute>
           } />
+
+          <Route path="/admin/transport" element={
+  <ProtectedRoute requiredRole={['ADMIN', 'MANAGER']}>
+    <TransportManagement />
+  </ProtectedRoute>
+} />
           
           {/* Главный маршрут с проверкой роли */}
           <Route path="/" element={

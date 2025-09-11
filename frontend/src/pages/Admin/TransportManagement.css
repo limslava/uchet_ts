@@ -1,0 +1,40 @@
+.transport-management {
+  padding: 0;
+}
+
+.transport-header {
+  margin-bottom: 32px;
+}
+
+.transport-header h1 {
+  margin: 0 0 8px 0;
+  color: #1f2937;
+  font-size: 28px;
+  font-weight: 700;
+}
+
+.transport-header p {
+  margin: 0;
+  color: #6b7280;
+  font-size: 16px;
+}
+
+.transport-content {
+  background: white;
+  padding: 24px;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+}
+
+.access-denied {
+  text-align: center;
+  padding: 60px 20px;
+  color: #6b7280;
+  background: white;
+  border-radius: 8px;
+}
+
+.access-denied h2 {
+  color: #ef4444;
+  margin-bottom: 16px;
+}

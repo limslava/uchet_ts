@@ -712,50 +712,66 @@ export const vehicleActController = {
   },
 
   // Подтверждение приема ТС
-  async confirmReceipt(req, res) {
-    try {
-      const { id } = req.params;
+async confirmReceipt(req, res) {
+  try {
+    const { id } = req.params;
+    const userId = req.user.id;
 
-      const act = await prisma.vehicleAct.findUnique({
-        where: { id }
-      });
+    // Получаем пользователя чтобы узнать его текущую локацию
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      include: { location: true }
+    });
 
-      if (!act) {
-        return res.status(404).json({ error: 'Акт не найден' });
-      }
-
-      const updatedAct = await prisma.vehicleAct.update({
-        where: { id },
-        data: {
-          status: 'RECEIVED',
-          receivedAt: new Date(),
-        },
-        include: {
-          photos: true,
-          user: {
-            select: {
-              id: true,
-              email: true,
-              name: true
-            }
-          },
-          carBrand: true,
-          carModel: true,
-          direction: true,
-          transportMethod: true,
-          Location: true
-        }
-      });
-
-      res.json(updatedAct);
-    } catch (error) {
-      logger.error('Receive vehicle act error:', error);
-      res.status(500).json({ 
-        error: 'Ошибка при подтверждении приема ТС',
-        details: error.message 
+    // Проверяем что у пользователя есть локация (для приемосдатчиков)
+    if (req.user.role === 'RECEIVER' && !user.locationId) {
+      return res.status(400).json({ 
+        error: 'У пользователя не выбрана локация. Пожалуйста, выберите локацию перед приемом ТС.' 
       });
     }
-  },
+
+    const act = await prisma.vehicleAct.findUnique({
+      where: { id }
+    });
+
+    if (!act) {
+      return res.status(404).json({ error: 'Акт не найден' });
+    }
+
+    const updatedAct = await prisma.vehicleAct.update({
+      where: { id },
+      data: {
+        status: 'RECEIVED',
+        receivedAt: new Date(),
+        // ОБНОВЛЯЕМ локацию на локацию пользователя
+        Location: user.location ? { connect: { id: user.location.id } } : undefined
+      },
+      include: {
+        photos: true,
+        user: {
+          select: {
+            id: true,
+            email: true,
+            name: true
+          }
+        },
+        carBrand: true,
+        carModel: true,
+        direction: true,
+        transportMethod: true,
+        Location: true // Включаем локацию в ответ
+      }
+    });
+
+    res.json(updatedAct);
+  } catch (error) {
+    logger.error('Receive vehicle act error:', error);
+    res.status(500).json({ 
+      error: 'Ошибка при подтверждении приема ТС',
+      details: error.message 
+    });
+  }
+},
 
   // Экспорт в DOCX
   async exportToDocx(req, res) {
