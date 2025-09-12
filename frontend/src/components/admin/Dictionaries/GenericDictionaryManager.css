@@ -1,5 +1,18 @@
-.dictionary-manager {
-  padding: 16px;
+.dictionary-management {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.tabs {
+  flex-shrink: 0;
+  margin-bottom: 16px;
+}
+
+.tab-content {
+  flex: 1 1 auto;
+  overflow: auto;   /* вертикальный скролл внутри контента */
+  min-height: 0;    /* разрешаем flex-сжатие */
 }
 
 .dictionary-header {
@@ -30,4 +43,20 @@
 
 .table-cell {
   text-align: center;
+}
+
+.dictionary-content {
+  background: white;
+  padding: 24px;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+
+  /* новое – разрешаем прокрутку только содержимого */
+  overflow-x: auto;   /* <-- ДОБАВИТЬ */
+}
+
+/* убираем жёсткую фиксацию ширины у самой таблицы */
+.data-table-container {
+  min-width: 800px;   /* <-- УДАЛИТЬ или заменить на */
+  /* width: max-content;  если нужна "естественная" ширина */
 }

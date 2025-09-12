@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { adminApi } from '../../../services/adminApi';
 import { GenericDictionaryManager } from './GenericDictionaryManager';
 import { TransportMethodModal } from './TransportMethodModal';
@@ -13,11 +13,7 @@ export const TransportMethodsManager = () => {
   const [pagination, setPagination] = useState({ page: 1, limit: 20, total: 0, pages: 1 });
   const [filters, setFilters] = useState({ search: '' });
 
-  useEffect(() => {
-    loadMethods();
-  }, [filters, pagination.page]);
-
-  const loadMethods = async () => {
+  const loadMethods = useCallback(async () => {
     try {
       setLoading(true);
       const res = await adminApi.getTransportMethods({
@@ -25,14 +21,18 @@ export const TransportMethodsManager = () => {
         limit: pagination.limit,
         search: filters.search
       });
-      setMethods(res.data.methods);
+      setMethods(res.data.transportMethods);
       setPagination(res.data.pagination);
     } catch (err) {
       alert('Ошибка загрузки способов перевозки');
     } finally {
       setLoading(false);
     }
-  };
+  }, [pagination.page, pagination.limit, filters.search]);
+
+  useEffect(() => {
+    loadMethods();
+  }, [loadMethods]);
 
   const columns = [
     {
@@ -48,21 +48,21 @@ export const TransportMethodsManager = () => {
       align: 'center'
     },
     {
-  key: 'actions',
-  title: 'Действия',
-  width: '15%',
-  align: 'center',
-  render: (_, location) => (
-    <div className="actions" style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
-      <Button size="small" variant="outline" onClick={() => handleEdit(location)}>
-        Редактировать
-      </Button>
-      <Button size="small" variant="danger" onClick={() => handleDelete(location)}>
-        Удалить
-      </Button>
-    </div>
-  )
-}
+      key: 'actions',
+      title: 'Действия',
+      width: '15%',
+      align: 'center',
+      render: (_, method) => (
+        <div className="actions" style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
+          <Button size="small" variant="outline" onClick={() => handleEdit(method)}>
+            Редактировать
+          </Button>
+          <Button size="small" variant="danger" onClick={() => handleDelete(method)}>
+            Удалить
+          </Button>
+        </div>
+      )
+    }
   ];
 
   const handleEdit = (method) => {

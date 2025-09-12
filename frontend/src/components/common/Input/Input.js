@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import './Input.css';
 
 export const Input = ({
@@ -10,27 +10,42 @@ export const Input = ({
   placeholder,
   required = false,
   disabled = false,
-  style
+  autoComplete = 'off'
 }) => {
+  const [showPassword, setShowPassword] = useState(false);
+
+  const isPassword = type === 'password';
+  const inputType = isPassword && showPassword ? 'text' : type;
+
   return (
-    <div className="input-group" style={style}>
+    <div className="input-wrapper">
       {label && (
         <label className="input-label">
           {label}
-          {required && <span className="required">*</span>}
+          {required && <span className="required-star"> *</span>}
         </label>
       )}
-      <input
-        type={type}
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        placeholder={placeholder}
-        disabled={disabled}
-        className={`input-field ${error ? 'error' : ''}`}
-      />
-      {error && <span className="input-error">{error}</span>}
+      <div className="input-container">
+        <input
+          type={inputType}
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          placeholder={placeholder}
+          disabled={disabled}
+          autoComplete={autoComplete}
+          className={`input-field ${error ? 'input-error' : ''}`}
+        />
+        {isPassword && (
+          <button
+            type="button"
+            className="password-toggle"
+            onClick={() => setShowPassword(!showPassword)}
+          >
+            {showPassword ? '🙈' : '👁️'}
+          </button>
+        )}
+      </div>
+      {error && <span className="error-message">{error}</span>}
     </div>
   );
 };
-
-export default Input;

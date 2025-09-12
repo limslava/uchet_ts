@@ -10,14 +10,12 @@ export const GenericDictionaryManager = ({
   columns,
   data,
   loading,
-  pagination = {}, // Добавляем значение по умолчанию
-  filters = {}, // Добавляем значение по умолчанию
+  pagination = {},
+  filters = {},
   onFilterChange,
   onPageChange,
   onAdd,
-  onEdit,
-  onDelete,
-  emptyMessage = "Данные не найдены",
+  emptyMessage = 'Данные не найдены',
   showSearch = true,
   additionalFilters = null
 }) => {
@@ -26,9 +24,7 @@ export const GenericDictionaryManager = ({
       <div className="dictionary-header">
         <h2>{title}</h2>
         {onAdd && (
-          <Button onClick={onAdd}>
-            + Добавить
-          </Button>
+          <Button onClick={onAdd}>+ Добавить</Button>
         )}
       </div>
 
@@ -65,3 +61,5 @@ export const GenericDictionaryManager = ({
     </div>
   );
 };
+
+export default GenericDictionaryManager;

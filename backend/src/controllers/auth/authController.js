@@ -65,29 +65,27 @@ export const authController = {
       return res.status(400).json({ error: 'Email и пароль обязательны' });
     }
 
-    logger.info('Login attempt for:', email);
-
     const user = await prisma.user.findUnique({
       where: { email: email.toLowerCase() },
       include: { location: true }
     });
 
     if (!user) {
-      logger.warn('User not found:', email);
       return res.status(401).json({ error: 'Неверные учетные данные' });
     }
 
     if (!user.isActive) {
-      logger.warn('User inactive:', email);
       return res.status(401).json({ error: 'Учетная запись не активна' });
     }
 
-    const validPassword = await bcrypt.compare(password, user.password);
+    // Важно: используем await и правильное сравнение
+    const validPassword = await bcrypt.compare(String(password), user.password);
+    
     if (!validPassword) {
-      logger.warn('Invalid password for:', email);
       return res.status(401).json({ error: 'Неверные учетные данные' });
     }
 
+    // Создание JWT токена
     const token = jwt.sign(
       { 
         userId: user.id, 
@@ -103,23 +101,21 @@ export const authController = {
 
     // Для приемосдатчика проверяем наличие локации
     if (user.role === 'RECEIVER') {
-  const locations = await prisma.location.findMany({
-    where: { isActive: true }
-  });
+      const locations = await prisma.location.findMany({
+        where: { isActive: true }
+      });
 
-  const { password: _, ...userWithoutPassword } = user;
+      return res.json({
+        needsLocation: true,
+        userId: user.id,
+        locations,
+        currentLocationId: user.locationId,
+        token,
+        user: userWithoutPassword
+      });
+    }
 
-  return res.json({
-    needsLocation: true,
-    userId: user.id,
-    locations,
-    currentLocationId: user.locationId, // ← можно показать, какую выбрал раньше
-    token,
-    user: userWithoutPassword
-  });
-}
-
-    // Для всех остальных ролей (ADMIN, MANAGER)
+    // Для всех остальных ролей
     res.json({
       message: 'Вход выполнен успешно',
       token,
@@ -127,7 +123,7 @@ export const authController = {
     });
 
   } catch (error) {
-    logger.error('Login error:', error);
+    console.error('Login error:', error);
     res.status(500).json({ error: 'Ошибка сервера при входе' });
   }
 },

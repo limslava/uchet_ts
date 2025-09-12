@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Modal } from '../../common/Modal/Modal';
 import { Input } from '../../common/Input/Input';
 import { Button } from '../../common/Button/Button';
+import { adminApi } from '../../../services/adminApi';
 import './UserModal.css';
 
 export const UserModal = ({
@@ -15,10 +16,9 @@ export const UserModal = ({
     email: '',
     name: '',
     role: 'RECEIVER',
-    locationId: '',
-    isActive: true
+    isActive: true,
+    password: ''
   });
-
   const [errors, setErrors] = useState({});
 
   useEffect(() => {
@@ -27,14 +27,16 @@ export const UserModal = ({
         email: user.email || '',
         name: user.name || '',
         role: user.role || 'RECEIVER',
-        isActive: user.isActive !== undefined ? user.isActive : true
+        isActive: user.isActive !== undefined ? user.isActive : true,
+        password: ''
       });
     } else {
       setFormData({
         email: '',
         name: '',
         role: 'RECEIVER',
-        isActive: true
+        isActive: true,
+        password: ''
       });
     }
     setErrors({});
@@ -60,16 +62,35 @@ export const UserModal = ({
       newErrors.name = 'Имя обязательно';
     }
 
+    if (!user && !formData.password) {
+      newErrors.password = 'Пароль обязателен';
+    } else if (formData.password && formData.password.length < 6) {
+      newErrors.password = 'Пароль должен быть не менее 6 символов';
+    }
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    if (validateForm()) {
-      onSubmit(formData);
+  const handleSubmit = async (e) => {
+  e.preventDefault();
+  if (validateForm()) {
+    // Если это редактирование пользователя и пароль не пустой,
+    // сначала обновляем пароль, затем отправляем основные данные
+    if (user && formData.password) {
+      try {
+        await adminApi.resetPassword(user.id, { newPassword: formData.password });
+      } catch (error) {
+        alert(error.response?.data?.error || 'Ошибка при изменении пароля');
+        return;
+      }
     }
-  };
+    
+    // Отправляем основные данные (исключая пароль при редактировании)
+    const { password, ...submitData } = formData;
+    onSubmit(user ? submitData : formData);
+  }
+};
 
   return (
     <Modal
@@ -110,7 +131,6 @@ export const UserModal = ({
           </select>
         </div>
 
-
         <div className="form-group">
           <label className="checkbox-label">
             <input
@@ -122,14 +142,24 @@ export const UserModal = ({
           </label>
         </div>
 
-        {!user && (
+        {!user ? (
           <Input
             label="Пароль"
             type="password"
-            value={formData.password || ''}
+            value={formData.password}
             onChange={(value) => handleChange('password', value)}
             error={errors.password}
-            required={!user}
+            required
+            autoComplete="new-password"
+          />
+        ) : (
+          <Input
+            label="Новый пароль (оставьте пустым, чтобы не менять)"
+            type="password"
+            value={formData.password}
+            onChange={(value) => handleChange('password', value)}
+            error={errors.password}
+            autoComplete="new-password"
           />
         )}
 

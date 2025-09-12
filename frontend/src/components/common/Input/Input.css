@@ -1,7 +1,8 @@
-.input-group {
+.input-wrapper {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 4px;
+  width: 100%;
 }
 
 .input-label {
@@ -10,9 +11,14 @@
   font-size: 14px;
 }
 
-.required {
+.required-star {
   color: #ef4444;
-  margin-left: 2px;
+}
+
+.input-container {
+  position: relative;
+  display: flex;
+  align-items: center;
 }
 
 .input-field {
@@ -20,7 +26,8 @@
   border: 1px solid #d1d5db;
   border-radius: 6px;
   font-size: 14px;
-  transition: border-color 0.2s;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .input-field:focus {
@@ -29,18 +36,26 @@
   box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
 }
 
-.input-field.error {
+.input-field.input-error {
   border-color: #ef4444;
 }
 
-.input-field:disabled {
-  background-color: #f9fafb;
-  color: #6b7280;
-  cursor: not-allowed;
+.password-toggle {
+  position: absolute;
+  right: 10px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 16px;
+  padding: 0;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.input-error {
+.error-message {
   color: #ef4444;
   font-size: 12px;
-  margin-top: 2px;
 }

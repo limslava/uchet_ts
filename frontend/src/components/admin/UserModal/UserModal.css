@@ -50,3 +50,9 @@
   padding-top: 16px;
   border-top: 1px solid #e5e7eb;
 }
+
+.password-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}

@@ -39,4 +39,22 @@ router.post('/locations', dictionaryAdminController.createLocation);
 router.put('/locations/:id', dictionaryAdminController.updateLocation);
 router.delete('/locations/:id', dictionaryAdminController.deleteLocation);
 
+// Водители
+router.get('/drivers', dictionaryAdminController.getDrivers);
+router.post('/drivers', dictionaryAdminController.createDriver);
+router.put('/drivers/:id', dictionaryAdminController.updateDriver);
+router.delete('/drivers/:id', dictionaryAdminController.deleteDriver);
+
+// Транспортные средства перевозчиков
+router.get('/company-vehicles', dictionaryAdminController.getCompanyVehicles);
+router.post('/company-vehicles', dictionaryAdminController.createCompanyVehicle);
+router.put('/company-vehicles/:id', dictionaryAdminController.updateCompanyVehicle);
+router.delete('/company-vehicles/:id', dictionaryAdminController.deleteCompanyVehicle);
+
+// Контейнеры
+router.get('/containers', dictionaryAdminController.getContainers);
+router.post('/containers', dictionaryAdminController.createContainer);
+router.put('/containers/:id', dictionaryAdminController.updateContainer);
+router.delete('/containers/:id', dictionaryAdminController.deleteContainer);
+
 export default router;

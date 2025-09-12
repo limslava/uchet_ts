@@ -1,79 +1,99 @@
 import React, { useState } from 'react';
-import { AdminLayout } from '../../components/admin/AdminLayout/AdminLayout';
 import { useAdmin } from '../../hooks/useAdmin';
 import { CarBrandsManager } from '../../components/admin/Dictionaries/CarBrandsManager';
 import { DirectionsManager } from '../../components/admin/Dictionaries/DirectionsManager';
 import { TransportMethodsManager } from '../../components/admin/Dictionaries/TransportMethodsManager';
 import { LocationsManager } from '../../components/admin/Dictionaries/LocationsManager';
-import { VehicleActsManager } from '../../components/admin/VehicleActs/VehicleActsManager';
+import { DriversManager } from '../../components/admin/Dictionaries/DriversManager';
+import { CompanyVehicleManager } from '../../components/admin/Dictionaries/CompanyVehicleManager';
+import { ContainersManager } from '../../components/admin/Dictionaries/ContainersManager';
 import './DictionaryManagement.css';
 
+const TABS = {
+  CAR_BRANDS: 'carBrands',
+  DIRECTIONS: 'directions',
+  TRANSPORT_METHODS: 'transportMethods',
+  LOCATIONS: 'locations',
+  DRIVERS: 'drivers',
+  COMPANY_VEHICLE: 'companyVehicle',
+  CONTAINERS: 'containers'
+};
+
 export const DictionaryManagement = () => {
-  const { canManageDictionaries } = useAdmin();
-  const [activeTab, setActiveTab] = useState('car-brands');
+  const [activeTab, setActiveTab] = useState(TABS.CAR_BRANDS);
 
-  const tabs = [
-    { id: 'car-brands', label: 'Марки и модели', icon: '🚗' },
-    { id: 'directions', label: 'Направления', icon: '🧭' },
-    { id: 'transport-methods', label: 'Способы перевозки', icon: '🚚' },
-    { id: 'locations', label: 'Локации', icon: '🏢' },
-    { id: 'vehicle-acts', label: 'Акты приёмки', icon: '📋' }
-  ];
-
-  if (!canManageDictionaries) {
-    return (
-      <AdminLayout>
-        <div className="access-denied">
-          <h2>Доступ запрещен</h2>
-          <p>Требуются права администратора или менеджера для управления справочниками</p>
-        </div>
-      </AdminLayout>
-    );
-  }
-
-  const renderContent = () => {
+  const renderTab = () => {
     switch (activeTab) {
-      case 'car-brands':
+      case TABS.CAR_BRANDS:
         return <CarBrandsManager />;
-      case 'directions':
+      case TABS.DIRECTIONS:
         return <DirectionsManager />;
-      case 'transport-methods':
+      case TABS.TRANSPORT_METHODS:
         return <TransportMethodsManager />;
-      case 'locations':
+      case TABS.LOCATIONS:
         return <LocationsManager />;
-      case 'vehicle-acts':
-        return <VehicleActsManager />;
+      case TABS.DRIVERS:
+        return <DriversManager />;
+      case TABS.COMPANY_VEHICLE:
+        return <CompanyVehicleManager />;
+      case TABS.CONTAINERS:
+        return <ContainersManager />;
       default:
         return <CarBrandsManager />;
     }
   };
 
   return (
-    <AdminLayout>
-      <div className="dictionary-management">
-        <div className="dictionary-header">
-          <h1>Управление справочниками</h1>
-          <p>Редактирование системных справочников и данных</p>
-        </div>
-
-        <div className="dictionary-tabs">
-          {tabs.map((tab) => (
-            <button
-              key={tab.id}
-              className={`tab-button ${activeTab === tab.id ? 'active' : ''}`}
-              onClick={() => setActiveTab(tab.id)}
-            >
-              <span className="tab-icon">{tab.icon}</span>
-              <span className="tab-label">{tab.label}</span>
-            </button>
-          ))}
-        </div>
-
-        <div className="dictionary-content">
-          {renderContent()}
-        </div>
+    <div className="dictionary-management">
+      <div className="tabs">
+        <button
+          className={activeTab === TABS.CAR_BRANDS ? 'active' : ''}
+          onClick={() => setActiveTab(TABS.CAR_BRANDS)}
+        >
+          Марки и модели
+        </button>
+        <button
+          className={activeTab === TABS.DIRECTIONS ? 'active' : ''}
+          onClick={() => setActiveTab(TABS.DIRECTIONS)}
+        >
+          Направления
+        </button>
+        <button
+          className={activeTab === TABS.TRANSPORT_METHODS ? 'active' : ''}
+          onClick={() => setActiveTab(TABS.TRANSPORT_METHODS)}
+        >
+          Способы перевозки
+        </button>
+        <button
+          className={activeTab === TABS.LOCATIONS ? 'active' : ''}
+          onClick={() => setActiveTab(TABS.LOCATIONS)}
+        >
+          Локации
+        </button>
+        <button
+          className={activeTab === TABS.DRIVERS ? 'active' : ''}
+          onClick={() => setActiveTab(TABS.DRIVERS)}
+        >
+          Водители
+        </button>
+        <button
+          className={activeTab === TABS.COMPANY_VEHICLE ? 'active' : ''}
+          onClick={() => setActiveTab(TABS.COMPANY_VEHICLE)}
+        >
+          ТС перевозчиков
+        </button>
+        <button
+          className={activeTab === TABS.CONTAINERS ? 'active' : ''}
+          onClick={() => setActiveTab(TABS.CONTAINERS)}
+        >
+          Контейнеры
+        </button>
       </div>
-    </AdminLayout>
+
+      <div className="tab-content">
+        {renderTab()}
+      </div>
+    </div>
   );
 };
 

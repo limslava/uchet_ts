@@ -45,6 +45,42 @@ model TransportMethod {
   @@map("transport_methods")
 }
 
+model Driver {
+  id        Int      @id @default(autoincrement())
+  fullName  String   // ФИО водителя
+  phone     String   // Телефон в формате +7XXXXXXXXXX
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("drivers")
+}
+
+model CompanyVehicle {
+  id           Int      @id @default(autoincrement())
+  brand        String   // Марка ТС
+  model        String   // Модель ТС
+  licensePlate String   // Гос. номер
+  park         String   // Парк: Собственный или Привлеченный
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@map("company_vehicles")
+}
+
+model Container {
+  id           Int      @id @default(autoincrement())
+  number       String   // Номер контейнера (4 буквы + 7 цифр)
+  type         String   // Тип контейнера
+  ownership    String   // Принадлежность: Собственные, Аренда, Лизинг
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@map("containers")
+}
+
 model CarBrand {
   id          Int          @id @default(autoincrement())
   name        String       @unique

@@ -70,15 +70,15 @@ export class UserAdminController {
       });
       
       if (password && password.length < 6) {
-  return res.status(400).json({ error: 'Пароль должен быть не менее 6 символов' });
-}
+        return res.status(400).json({ error: 'Пароль должен быть не менее 6 символов' });
+      }
 
       if (existingUser) {
         return res.status(409).json({ error: 'Пользователь с таким email уже существует' });
       }
       
       // Хеширование пароля
-      const hashedPassword = await bcrypt.hash(password, 12);
+      const hashedPassword = await bcrypt.hash(String(password), 12);
       
       const user = await prisma.user.create({
         data: {
@@ -156,24 +156,39 @@ export class UserAdminController {
   }
   
   // Сбросить пароль пользователя
-  async resetPassword(req, res) {
-    try {
-      const { id } = req.params;
-      const { newPassword } = req.body;
-      
-      const hashedPassword = await bcrypt.hash(newPassword, 12);
-      
-      await prisma.user.update({
-        where: { id: parseInt(id) },
-        data: { password: hashedPassword }
-      });
-      
-      res.json({ message: 'Пароль успешно сброшен' });
-    } catch (error) {
-      console.error('Reset password error:', error);
-      res.status(500).json({ error: 'Ошибка при сбросе пароля' });
+async resetPassword(req, res) {
+  try {
+    const { id } = req.params;
+    const { newPassword } = req.body;
+    
+    // Проверка существования пользователя
+    const user = await prisma.user.findUnique({
+      where: { id: parseInt(id) }
+    });
+    
+    if (!user) {
+      return res.status(404).json({ error: 'Пользователь не найден' });
     }
+    
+    // Проверка длины пароля
+    if (!newPassword || newPassword.length < 6) {
+      return res.status(400).json({ error: 'Пароль должен быть не менее 6 символов' });
+    }
+    
+    // Хеширование пароля
+    const hashedPassword = await bcrypt.hash(String(newPassword), 12);
+    
+    await prisma.user.update({
+      where: { id: parseInt(id) },
+      data: { password: hashedPassword }
+    });
+    
+    res.json({ message: 'Пароль успешно сброшен' });
+  } catch (error) {
+    console.error('Reset password error:', error);
+    res.status(500).json({ error: 'Ошибка при сбросе пароля' });
   }
+}
 }
 
 export const userAdminController = new UserAdminController();

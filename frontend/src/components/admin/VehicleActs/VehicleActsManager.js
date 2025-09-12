@@ -54,6 +54,37 @@ export const VehicleActsManager = () => {
     }
   };
 
+const loadVehicleActs = async () => {
+  try {
+    setLoading(true);
+    const res = await adminApi.getVehicleActs({
+      page: pagination.page,
+      limit: pagination.limit,
+      search: filters.search,
+      status: filters.status
+    });
+    
+    if (res.data && res.data.acts && res.data.pagination) {
+      setActs(res.data.acts);
+      setPagination(res.data.pagination);
+    } else {
+      setActs([]);
+      setPagination({ page: 1, limit: 20, total: 0, pages: 1 });
+    }
+  } catch (err) {
+    if (err.response?.status === 401) {
+      alert('Сессия истекла. Пожалуйста, войдите снова.');
+      localStorage.removeItem('token');
+      window.location.href = '/login';
+    } else {
+      alert('Ошибка загрузки актов');
+    }
+    setActs([]);
+  } finally {
+    setLoading(false);
+  }
+};
+
   const handlePrintAct = async (act) => {
     try {
       const response = await adminApi.printVehicleAct(act.id);
