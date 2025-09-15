@@ -11,5 +11,6 @@ router.get('/car-brands', dictionaryController.getCarBrands);
 router.get('/car-brands/:brandId/models', dictionaryController.getCarModelsByBrand);
 router.get('/directions', dictionaryController.getDirections);
 router.get('/transport-methods', dictionaryController.getTransportMethods);
+router.get('/company-vehicles', dictionaryController.getCompanyVehicles);
 
 export default router;

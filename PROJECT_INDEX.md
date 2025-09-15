@@ -85,3 +85,36 @@
 - Сканирование QR-кодов
 - Управление пользователями
 - Работа со справочниками
+
+
+## 4. PROJECT_INDEX.md
+
+```markdown
+# Индекс проекта
+
+## Модуль выдачи ТС
+- ✅ Погрузка в контейнер - ContainerStuffing
+- ✅ Погрузка в сетку - GridLoading  
+- ✅ Погрузка в автовоз-штору - CurtainTruckLoading
+- ✅ Погрузка на автовоз - AutocarrierLoading
+- ✅ Выбор типа отгрузки - TransportTypeSelection
+
+## Справочники
+- ✅ ТС перевозчиков - CompanyVehicleManager
+- ✅ Контейнеры - ContainersManager
+- ✅ Водители - DriversManager
+- ✅ Локации - LocationsManager
+
+## API Endpoints
+- ✅ `/vehicle-acts/:id/issue` - Выдача ТС
+- ✅ `/api/dictionaries/company-vehicles` - ТС перевозчиков
+- ✅ `/api/dictionaries/containers` - Контейнеры
+- ✅ `/api/admin/dictionaries/company-vehicles` - Управление ТС (admin)
+
+## Статусы реализации
+- [x] Базовая выдача грузополучателю
+- [x] Выдача в контейнер
+- [x] Выдача в сетку
+- [x] Выдача в автовоз-штору
+- [x] Выдача на автовоз
+- [x] Интеграция со справочниками

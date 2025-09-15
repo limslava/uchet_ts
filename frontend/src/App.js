@@ -15,8 +15,9 @@ import TransportManagement from './pages/Admin/TransportManagement';
 import IssueByScan from './pages/IssueByScan/IssueByScan';
 import TransportTypeSelection from './components/vehicle/TransportTypeSelection/TransportTypeSelection';
 import ContainerStuffing from './components/vehicle/ContainerStuffing/ContainerStuffing';
-
-
+import GridLoading from './components/vehicle/GridLoading/GridLoading';
+import CurtainTruckLoading from './components/vehicle/CurtainTruckLoading/CurtainTruckLoading';
+import AutocarrierLoading from './components/vehicle/AutocarrierLoading/AutocarrierLoading';
 
 // Компонент для проверки роли и перенаправления
 const RoleBasedRoute = () => {
@@ -88,6 +89,11 @@ function App() {
     <ContainerStuffing />
   </ProtectedRoute>
 } />
+
+
+<Route path="/grid-loading" element={<GridLoading />} />
+<Route path="/curtain-truck-loading" element={<CurtainTruckLoading />} />
+<Route path="/autocarrier-loading" element={<AutocarrierLoading />} />
 
           {/* Маршруты для администраторов */}
           <Route path="/admin/*" element={

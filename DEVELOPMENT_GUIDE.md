@@ -93,3 +93,40 @@ npm run dev                # Логирование SQL запросов
 - ✅ Статус ТС должен быть "RECEIVED" или "Принят"
 
 **Версия руководства:** 2.2.0 | **Обновлено:** 2025-09-16
+
+# Руководство разработчика
+
+## Добавление нового типа выдачи
+
+### 1. Backend изменения
+- Добавить новый тип в enum `IssueType` (schema.prisma)
+- Добавить новый статус в enum `VehicleActStatus` (schema.prisma)
+- Обновить метод `issueVehicleAct` в vehicleActController.js
+
+### 2. Frontend изменения
+- Создать компонент для нового типа выдачи
+- Добавить обработку в TransportTypeSelection.js
+- Добавить роут в App.js
+- Обновить VehicleActModal.js для отображения нового статуса
+
+### 3. Пример для автовоза
+```javascript
+// schema.prisma
+enum IssueType {
+  AUTOCARRIER
+}
+enum VehicleActStatus {
+  LOADED_INTO_AUTOCARRIER
+}
+
+// vehicleActController.js
+if (issueType === 'AUTOCARRIER') {
+  status = 'LOADED_INTO_AUTOCARRIER';
+}
+
+Работа со справочниками
+Публичные справочники доступны через /api/dictionaries/
+
+Admin справочники доступны через /api/admin/dictionaries/
+
+Для фронтенда использовать методы из services/api.js

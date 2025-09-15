@@ -68,6 +68,30 @@ const getContainers = async (req, res) => {
   }
 };
 
+export const getCompanyVehicles = async (req, res) => {
+  try {
+    const { isActive = 'true', park = '' } = req.query;
+    
+    const where = {
+      isActive: isActive === 'true'
+    };
+
+    if (park) {
+      where.park = park;
+    }
+
+    const vehicles = await prisma.companyVehicle.findMany({
+      where,
+      orderBy: [{ brand: 'asc' }, { model: 'asc' }]
+    });
+
+    res.json(vehicles);
+  } catch (error) {
+    logger.error('Get company vehicles error:', error);
+    res.status(500).json({ error: 'Ошибка при получении ТС перевозчиков' });
+  }
+};
+
 // Получение всех направлений
 const getDirections = async (req, res) => {
   try {
@@ -145,5 +169,6 @@ export const dictionaryController = {
   getDirections,
   getTransportMethods,
   getCarBrands,
-  getCarModelsByBrand
+  getCarModelsByBrand,
+  getCompanyVehicles
 };

@@ -820,12 +820,23 @@ async issueVehicleAct(req, res) {
     }
 
     // 5. Подготавливаем данные для обновления
+    let status = 'COMPLETED';
+    if (issueType === 'CONTAINER') {
+      status = 'LOADED_INTO_CONTAINER';
+    } else if (issueType === 'GRID') {
+      status = 'LOADED_INTO_GRID';
+    } else if (issueType === 'CURTAIN_TRUCK') {
+      status = 'LOADED_INTO_CURTAIN_TRUCK';
+    } else if (issueType === 'AUTOCARRIER') {
+      status = 'LOADED_INTO_AUTOCARRIER'; // ДОБАВЛЕНО: статус для автовоза
+    }
+
     let updateData = {
       issueType: issueType,
       issueData: issueData || {},
       issuedAt: new Date(),
       issuedBy: { connect: { id: userId } },
-      status: issueType === 'CONTAINER' ? 'LOADED_INTO_CONTAINER' : 'COMPLETED'
+      status: status // Используем переменную статуса
     };
 
     // 6. Обновляем акт

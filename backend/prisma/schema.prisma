@@ -262,7 +262,10 @@ model Photo {
 enum IssueType {
   RECIPIENT    // Выдача грузополучателю
   TRANSPORT    // Выдача на транспорт
-  CONTAINER    
+  CONTAINER    // Выдача в контейнер
+  GRID         // Погрузка в сетку - ДОБАВЛЕНО 
+  CURTAIN_TRUCK  // ДОБАВЛЕНО: Автовоз-штора
+  AUTOCARRIER  // ДОБАВЛЕНО: Автовоз
 }
 
 enum UserRole {
@@ -276,6 +279,9 @@ enum VehicleActStatus {
   COMPLETED
   CANCELLED
   LOADED_INTO_CONTAINER
+  LOADED_INTO_GRID       // ДОБАВЛЕНО
+  LOADED_INTO_CURTAIN_TRUCK  // ДОБАВЛЕНО: Погружен в автовоз-штору
+  LOADED_INTO_AUTOCARRIER  // ДОБАВЛЕНО: Отгружен на автовоз
 }
 
 enum InspectionStatus {

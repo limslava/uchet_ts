@@ -76,3 +76,45 @@
 - `GET /api/dictionaries/containers` - Список контейнеров
 
 **Версия API:** 2.2.0 | **Обновлено:** 2025-09-16
+
+# Справочник API
+
+## Публичные endpoints (требуют аутентификации)
+
+### Транспортные средства перевозчиков
+- `GET /api/dictionaries/company-vehicles` - Получить список ТС перевозчиков
+  - Параметры:
+    - `isActive` - фильтр по активности (true/false)
+    - `park` - фильтр по парку (Собственный/Привлеченный)
+
+### Контейнеры
+- `GET /api/dictionaries/containers` - Получить список контейнеров
+
+### Автомобильные марки
+- `GET /api/dictionaries/car-brands` - Получить список марок автомобилей
+
+### Направления перевозок
+- `GET /api/dictionaries/directions` - Получить список направлений
+
+### Способы перевозки
+- `GET /api/dictionaries/transport-methods` - Получить список способов перевозки
+
+## Выдача транспортных средств
+
+### Типы выдачи
+- `RECIPIENT` - Выдача грузополучателю
+- `TRANSPORT` - Выдача на транспорт
+- `CONTAINER` - Погрузка в контейнер
+- `GRID` - Погрузка в сетку
+- `CURTAIN_TRUCK` - Погрузка в автовоз-штору
+- `AUTOCARRIER` - Погрузка на автовоз
+
+### Статусы VehicleAct
+- `NEW` - Новый
+- `RECEIVED` - Принят
+- `COMPLETED` - Завершен
+- `CANCELLED` - Отменен
+- `LOADED_INTO_CONTAINER` - Погружен в контейнер
+- `LOADED_INTO_GRID` - Погружен в сетку
+- `LOADED_INTO_CURTAIN_TRUCK` - Погружен в автовоз-штору
+- `LOADED_INTO_AUTOCARRIER` - Отгружен на автовоз

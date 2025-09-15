@@ -12,14 +12,19 @@ const TransportTypeSelection = () => {
     { id: 'truck', name: 'Фура', icon: '🚚' }
   ];
 
-  const handleTransportSelect = (transportType) => {
-    if (transportType === 'container') {
-      navigate('/container-shipping'); // Убрали ID из пути
-    } else {
-      alert(`Тип отгрузки "${transportType}" в разработке`);
-    }
-  };
-
+const handleTransportSelect = (transportType) => {
+  if (transportType === 'container') {
+    navigate('/container-shipping');
+  } else if (transportType === 'net') {
+    navigate('/grid-loading');
+  } else if (transportType === 'truck') {
+    navigate('/curtain-truck-loading');
+  } else if (transportType === 'autocarrier') {
+    navigate('/autocarrier-loading'); // ДОБАВЛЕНО: переход на погрузку на автовоз
+  } else {
+    alert(`Тип отгрузки "${transportType}" в разработке`);
+  }
+};
   return (
     <div className="transport-type-selection">
       <h2>Выберите тип отгрузки</h2>

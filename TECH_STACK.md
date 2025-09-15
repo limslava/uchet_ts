@@ -76,3 +76,41 @@ markdown
 - Валидация данных перед отправкой
 
 **Версия стека:** 2.2.0 | **Обновлено:** 2025-09-16
+
+# Технологический стек
+
+## Backend
+- **Runtime**: Node.js 18+
+- **Framework**: Express.js
+- **ORM**: Prisma
+- **Database**: PostgreSQL
+- **Authentication**: JWT
+- **Logging**: Winston
+- **Validation**: Joi + custom middleware
+
+## Frontend  
+- **Framework**: React 18
+- **Routing**: React Router
+- **HTTP Client**: Fetch API + axios (admin)
+- **State Management**: React hooks
+- **Styling**: CSS Modules
+- **QR Scanning**: react-qr-reader
+
+## Инфраструктура
+- **Web Server**: Nginx
+- **SSL**: Self-signed certificates (dev)
+- **Process Manager**: PM2
+- **Database**: PostgreSQL with migrations
+
+## Модули выдачи ТС
+- `ContainerStuffing` - Интеграция с справочником контейнеров
+- `GridLoading` - Упрощенная выдача без дополнительных полей
+- `CurtainTruckLoading` - Выдача с номером пломбы
+- `AutocarrierLoading` - Интеграция со справочником ТС перевозчиков
+
+## API Design
+- RESTful architecture
+- JSON responses
+- Error handling standardization
+- Pagination and filtering
+- Cache control headers

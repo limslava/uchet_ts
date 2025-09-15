@@ -134,7 +134,10 @@ export const VehicleActModal = ({
       RECEIVED: 'Принят',
       COMPLETED: 'Завершен',
       CANCELLED: 'Отменен',
-      LOADED_INTO_CONTAINER: 'Погружен в контейнер'
+      LOADED_INTO_CONTAINER: 'Погружен в контейнер',
+      LOADED_INTO_GRID: 'Погружен в сетку',
+      LOADED_INTO_CURTAIN_TRUCK: 'Погружен в автовоз-штору',
+      LOADED_INTO_AUTOCARRIER: 'Отгружен на автовоз' // ДОБАВЛЕНО
     };
     return statuses[status] || status;
   };
@@ -330,6 +333,9 @@ export const VehicleActModal = ({
               <option value="COMPLETED">Завершен</option>
               <option value="CANCELLED">Отменен</option>
               <option value="LOADED_INTO_CONTAINER">Погружен в контейнер</option>
+              <option value="LOADED_INTO_GRID">Погружен в сетку</option>
+              <option value="LOADED_INTO_CURTAIN_TRUCK">Погружен в автовоз-штору</option>
+              <option value="LOADED_INTO_AUTOCARRIER">Отгружен на автовоз</option>
             </select>
           </div>
         </div>

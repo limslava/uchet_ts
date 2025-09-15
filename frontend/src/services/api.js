@@ -125,3 +125,20 @@ export const issueVehicle = async (actId, issueData) => {
     body: JSON.stringify(issueData),
   });
 };
+
+export const getCompanyVehicles = async (params = {}) => {
+  try {
+    const queryParams = new URLSearchParams();
+    Object.keys(params).forEach(key => {
+      if (params[key] !== undefined && params[key] !== '') {
+        queryParams.append(key, params[key]);
+      }
+    });
+    
+    const url = `/api/dictionaries/company-vehicles${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
+    return request(url);
+  } catch (error) {
+    console.error('Ошибка получения ТС перевозчиков:', error);
+    throw error;
+  }
+};
