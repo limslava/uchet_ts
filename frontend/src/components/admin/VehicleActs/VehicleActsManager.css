@@ -155,6 +155,18 @@
   color: #991b1b;
 }
 
+.status-loaded_into_container {
+  background-color: #e8f5e8;
+  color: #2e7d32;
+  border: 1px solid #c8e6c9;
+}
+
+.status-badge.status-loaded_into_container {
+  background-color: #e8f5e8;
+  color: #2e7d32;
+  border: 1px solid #c8e6c9;
+}
+
 /* Адаптивность */
 @media (max-width: 768px) {
   .vehicle-acts-filters {
@@ -287,3 +299,4 @@
     min-width: auto;
   }
 }
+

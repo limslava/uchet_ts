@@ -18,10 +18,13 @@ model User {
   updatedAt           DateTime     @updatedAt
   assignedInspections Inspection[] @relation("InspectionsAssignedTo")
   createdInspections  Inspection[] @relation("InspectionsCreatedBy")
-  locationId Int?
-  location   Location? @relation(fields: [locationId], references: [id], onDelete: SetNull)
+  locationId          Int?
+  location            Location?    @relation(fields: [locationId], references: [id], onDelete: SetNull)
   vehicleActs         VehicleAct[]
-
+  
+  // Добавляем обратное отношение для выданных актов
+  issuedVehicleActs   VehicleAct[] @relation("IssuedBy")
+  
   @@map("users")
 }
 
@@ -239,6 +242,11 @@ model VehicleAct {
   Location   Location? @relation(fields: [LocationId], references: [id], onDelete: SetNull)
   receivedAt         DateTime?
   @@map("vehicle_acts")
+  issueType          IssueType?     // Тип выдачи: получатель или транспорт
+  issueData          Json?          // Данные выдачи в формате JSON
+  issuedAt           DateTime?      // Дата и время выдачи
+  issuedById         Int?           // Кто выдал
+  issuedBy           User?          @relation("IssuedBy", fields: [issuedById], references: [id], onDelete: SetNull)
 }
 
 model Photo {
@@ -251,6 +259,12 @@ model Photo {
   @@map("photos")
 }
 
+enum IssueType {
+  RECIPIENT    // Выдача грузополучателю
+  TRANSPORT    // Выдача на транспорт
+  CONTAINER    
+}
+
 enum UserRole {
   ADMIN
   MANAGER
@@ -261,6 +275,7 @@ enum VehicleActStatus {
   RECEIVED
   COMPLETED
   CANCELLED
+  LOADED_INTO_CONTAINER
 }
 
 enum InspectionStatus {

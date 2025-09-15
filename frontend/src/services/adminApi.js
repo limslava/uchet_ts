@@ -1,17 +1,64 @@
 import axios from 'axios';
 
+const requestCache = new Map();
+const CACHE_TTL = 5000; // 5 секунд
+
 const api = axios.create({
   baseURL: process.env.REACT_APP_API_URL || 'http://localhost:5000',
   timeout: 10000,
 });
 
+// Основной интерсептор запроса
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem('token');
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
+  
+  // Кэшируем только GET запросы
+  if (config.method === 'get') {
+    const cacheKey = `${config.url}-${JSON.stringify(config.params)}`;
+    const cached = requestCache.get(cacheKey);
+    
+    if (cached && (Date.now() - cached.timestamp) < CACHE_TTL) {
+      // Отменяем реальный запрос и возвращаем кэшированные данные
+      config.adapter = () => Promise.resolve({
+        data: cached.data,
+        status: 200,
+        statusText: 'OK',
+        headers: {},
+        config
+      });
+    }
+  }
+  
   return config;
 });
+
+// Основной интерсептор ответа
+api.interceptors.response.use(
+  (response) => {
+    // Сохраняем GET запросы в кэш
+    if (response.config.method === 'get') {
+      const cacheKey = `${response.config.url}-${JSON.stringify(response.config.params)}`;
+      requestCache.set(cacheKey, {
+        data: response.data,
+        timestamp: Date.now()
+      });
+    }
+    return response;
+  },
+  (error) => {
+    if (error.response?.status === 401) {
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      window.location.href = '/login';
+    }
+    return Promise.reject(error);
+  }
+);
+
+// ... остальной код без изменений ...
 
 export const adminApi = {
   // Управление пользователями
@@ -59,7 +106,11 @@ createCompanyVehicle: (data) => api.post('/api/admin/dictionaries/company-vehicl
 updateCompanyVehicle: (id, data) => api.put(`/api/admin/dictionaries/company-vehicles/${id}`, data),
 deleteCompanyVehicle: (id) => api.delete(`/api/admin/dictionaries/company-vehicles/${id}`),
 
-getContainers: (params) => api.get('/api/admin/dictionaries/containers', { params }),
+getContainers: (params) => {
+  console.log('Запрос контейнеров с параметрами:', params);
+  return api.get('/api/admin/dictionaries/containers', { params });
+},
+
 createContainer: (data) => api.post('/api/admin/dictionaries/containers', data),
 updateContainer: (id, data) => api.put(`/api/admin/dictionaries/containers/${id}`, data),
 deleteContainer: (id) => api.delete(`/api/admin/dictionaries/containers/${id}`),

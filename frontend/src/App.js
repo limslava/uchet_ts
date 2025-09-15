@@ -12,6 +12,10 @@ import UserManagement from './components/admin/Users/UserManagement';
 import './App.css';
 import { AdminLayout } from './components/admin/AdminLayout/AdminLayout';
 import TransportManagement from './pages/Admin/TransportManagement';
+import IssueByScan from './pages/IssueByScan/IssueByScan';
+import TransportTypeSelection from './components/vehicle/TransportTypeSelection/TransportTypeSelection';
+import ContainerStuffing from './components/vehicle/ContainerStuffing/ContainerStuffing';
+
 
 
 // Компонент для проверки роли и перенаправления
@@ -58,6 +62,33 @@ function App() {
             </ProtectedRoute>
           } />
           
+          <Route path="/admin/*" element={
+  <ProtectedRoute>
+    <Routes>
+      <Route path="" element={<AdminDashboard />} />
+      <Route path="users" element={<AdminLayout><UserManagement /></AdminLayout>} />
+      <Route path="dictionaries" element={<AdminLayout><DictionaryManagement /></AdminLayout>} />
+      <Route path="transport" element={
+        <AdminLayout>
+          <TransportManagement />
+        </AdminLayout>
+      } />
+      <Route path="*" element={<Navigate to="/admin" replace />} />
+    </Routes>
+  </ProtectedRoute>
+} />
+
+<Route path="/transport-type" element={
+  <ProtectedRoute>
+    <TransportTypeSelection />
+  </ProtectedRoute>
+} />
+<Route path="/container-shipping" element={
+  <ProtectedRoute>
+    <ContainerStuffing />
+  </ProtectedRoute>
+} />
+
           {/* Маршруты для администраторов */}
           <Route path="/admin/*" element={
             <ProtectedRoute>
@@ -73,6 +104,12 @@ function App() {
           <Route path="/admin/transport" element={
   <ProtectedRoute requiredRole={['ADMIN', 'MANAGER']}>
     <TransportManagement />
+  </ProtectedRoute>
+} />
+
+<Route path="/issue-by-scan" element={
+  <ProtectedRoute>
+    <IssueByScan />
   </ProtectedRoute>
 } />
           

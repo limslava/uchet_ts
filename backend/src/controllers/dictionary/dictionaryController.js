@@ -1,4 +1,5 @@
 import { prisma } from '../../utils/database.js';
+import { logger } from '../../utils/logger.js';
 
 export class AnalyticsAdminController {
   async getDashboardStats(req, res) {
@@ -46,63 +47,82 @@ export class AnalyticsAdminController {
 
 export const analyticsAdminController = new AnalyticsAdminController();
 
-export const dictionaryController = {
-  // Получение всех направлений
-  async getDirections(req, res) {
-    try {
-      const directions = await prisma.direction.findMany({
-        where: { isActive: true },
-        orderBy: { name: 'asc' }
-      });
-      res.json(directions);
-    } catch (error) {
-      logger.error('Get directions error:', error);
-      res.status(500).json({ error: 'Ошибка получения направлений' });
-    }
-  },
+// ========================= DICTIONARY METHODS =========================
 
-  // Получение всех способов перевозки
-  async getTransportMethods(req, res) {
-    try {
-      const methods = await prisma.transportMethod.findMany({
-        where: { isActive: true },
-        orderBy: { name: 'asc' }
-      });
-      res.json(methods);
-    } catch (error) {
-      logger.error('Get transport methods error:', error);
-      res.status(500).json({ error: 'Ошибка получения способов перевозки' });
-    }
-  },
-
-  // Получение всех марок автомобилей
-  async getCarBrands(req, res) {
-    try {
-      const brands = await prisma.carBrand.findMany({
-        orderBy: { name: 'asc' },
-        include: {
-          models: {
-            orderBy: { name: 'asc' }
-          }
-        }
-      });
-      res.json(brands);
-    } catch (error) {
-      logger.error('Get car brands error:', error);
-      res.status(500).json({ error: 'Ошибка получения марок автомобилей' });
-    }
-  },
-
-  // Получение моделей по марке
-  async getCarModelsByBrand(req, res) {
+// Получение контейнеров
+const getContainers = async (req, res) => {
   try {
-    const { bodyType } = req.query; // ДОБАВЛЕНО: опциональный параметр фильтрации
+    const { isActive = 'true' } = req.query;
+    
+    const containers = await prisma.container.findMany({
+      where: {
+        isActive: isActive === 'true'
+      },
+      orderBy: { number: 'asc' }
+    });
+
+    res.json(containers);
+  } catch (error) {
+    logger.error('Get containers error:', error);
+    res.status(500).json({ error: 'Ошибка при получении контейнеров' });
+  }
+};
+
+// Получение всех направлений
+const getDirections = async (req, res) => {
+  try {
+    const directions = await prisma.direction.findMany({
+      where: { isActive: true },
+      orderBy: { name: 'asc' }
+    });
+    res.json(directions);
+  } catch (error) {
+    logger.error('Get directions error:', error);
+    res.status(500).json({ error: 'Ошибка получения направлений' });
+  }
+};
+
+// Получение всех способов перевозки
+const getTransportMethods = async (req, res) => {
+  try {
+    const methods = await prisma.transportMethod.findMany({
+      where: { isActive: true },
+      orderBy: { name: 'asc' }
+    });
+    res.json(methods);
+  } catch (error) {
+    logger.error('Get transport methods error:', error);
+    res.status(500).json({ error: 'Ошибка получения способов перевозки' });
+  }
+};
+
+// Получение всех марок автомобилей
+const getCarBrands = async (req, res) => {
+  try {
+    const brands = await prisma.carBrand.findMany({
+      orderBy: { name: 'asc' },
+      include: {
+        models: {
+          orderBy: { name: 'asc' }
+        }
+      }
+    });
+    res.json(brands);
+  } catch (error) {
+    logger.error('Get car brands error:', error);
+    res.status(500).json({ error: 'Ошибка получения марок автомобилей' });
+  }
+};
+
+// Получение моделей по марке
+const getCarModelsByBrand = async (req, res) => {
+  try {
+    const { bodyType } = req.query;
     
     const whereClause = { 
       brandId: parseInt(req.params.brandId) 
     };
     
-    // ДОБАВЛЕНО: фильтрация по типу кузова, если указана
     if (bodyType) {
       whereClause.bodyType = bodyType;
     }
@@ -117,5 +137,13 @@ export const dictionaryController = {
     logger.error('Get car models error:', error);
     res.status(500).json({ error: 'Ошибка получения моделей' });
   }
-}
+};
+
+// ========================= EXPORT CONTROLLER =========================
+export const dictionaryController = {
+  getContainers,     // ✅ Добавлен в объект
+  getDirections,
+  getTransportMethods,
+  getCarBrands,
+  getCarModelsByBrand
 };

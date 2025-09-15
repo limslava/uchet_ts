@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { adminApi } from '../../../services/adminApi';
 import { GenericDictionaryManager } from '../Dictionaries/GenericDictionaryManager';
 import { Button } from '../../common/Button/Button';
@@ -7,6 +7,7 @@ import { Input } from '../../common/Input/Input';
 import './VehicleActsManager.css';
 
 export const VehicleActsManager = () => {
+  console.log('VehicleActsManager rendered');
   const [acts, setActs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
@@ -25,11 +26,8 @@ export const VehicleActsManager = () => {
     dateTo: ''
   });
 
-  useEffect(() => {
-    loadActs();
-  }, [filters, pagination.page]);
-
-  const loadActs = async () => {
+  // Используем useCallback для стабилизации функции
+  const loadActs = useCallback(async () => {
     try {
       setLoading(true);
       const params = {
@@ -52,38 +50,11 @@ export const VehicleActsManager = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [filters, pagination.page, pagination.limit]);
 
-const loadVehicleActs = async () => {
-  try {
-    setLoading(true);
-    const res = await adminApi.getVehicleActs({
-      page: pagination.page,
-      limit: pagination.limit,
-      search: filters.search,
-      status: filters.status
-    });
-    
-    if (res.data && res.data.acts && res.data.pagination) {
-      setActs(res.data.acts);
-      setPagination(res.data.pagination);
-    } else {
-      setActs([]);
-      setPagination({ page: 1, limit: 20, total: 0, pages: 1 });
-    }
-  } catch (err) {
-    if (err.response?.status === 401) {
-      alert('Сессия истекла. Пожалуйста, войдите снова.');
-      localStorage.removeItem('token');
-      window.location.href = '/login';
-    } else {
-      alert('Ошибка загрузки актов');
-    }
-    setActs([]);
-  } finally {
-    setLoading(false);
-  }
-};
+  useEffect(() => {
+    loadActs();
+  }, [loadActs]);
 
   const handlePrintAct = async (act) => {
     try {
@@ -114,7 +85,8 @@ const loadVehicleActs = async () => {
       NEW: 'Новый',
       RECEIVED: 'Принят',
       COMPLETED: 'Завершен',
-      CANCELLED: 'Отменен'
+      CANCELLED: 'Отменен',
+      LOADED_INTO_CONTAINER: 'Погружен в контейнер'
     };
     return statuses[status] || status;
   };
@@ -282,7 +254,7 @@ const loadVehicleActs = async () => {
                 <option value="NEW">Новый</option>
                 <option value="RECEIVED">Принят</option>
                 <option value="COMPLETED">Завершен</option>
-                <option value="CANCELLED">Отменен</option>
+                <option value="LOADED_INTO_CONTAINER">Погружен в контейнер</option> 
               </select>
             </div>
             

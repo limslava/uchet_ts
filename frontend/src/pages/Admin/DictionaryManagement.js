@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { useAdmin } from '../../hooks/useAdmin';
 import { CarBrandsManager } from '../../components/admin/Dictionaries/CarBrandsManager';
 import { DirectionsManager } from '../../components/admin/Dictionaries/DirectionsManager';
 import { TransportMethodsManager } from '../../components/admin/Dictionaries/TransportMethodsManager';

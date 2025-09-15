@@ -22,5 +22,6 @@ router.get('/check-vin/:vin', vehicleActController.checkVin);
 router.post('/:id/receive', vehicleActController.confirmReceipt);
 router.get('/:id/export-docx', vehicleActController.exportToDocx);
 router.get('/:id/print', vehicleActController.printHtml);
+router.post('/:id/issue', vehicleActController.issueVehicleAct);
 
 export default router;

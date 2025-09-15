@@ -39,32 +39,41 @@ export default function ReceiverDashboard() {
       <h1>Панель приемосдатчика</h1>
       
       <div className="dashboard-buttons">
-        <div className="dashboard-button-wrapper">
-          <Link to="/receive" className="dashboard-link">
-            <Button variant="primary" size="large">
-              Создать новый акт приёмки
-            </Button>
-          </Link>
-        </div>
-        
-        <div className="dashboard-button-wrapper">
-          <Link to="/receive-by-scan" className="dashboard-link">
-            <Button variant="secondary" size="large">
-              Прием по QR-коду
-            </Button>
-          </Link>
-        </div>
-        
-        <div className="dashboard-button-wrapper">
-          <Button 
-            onClick={handleLogout}
-            variant="danger"
-            size="large"
-          >
-            Выйти
-          </Button>
-        </div>
-      </div>
+         <div className="dashboard-button-wrapper">
+    <Link to="/receive" className="dashboard-link">
+      <Button variant="primary" size="large">
+        Создать новый акт приёмки
+      </Button>
+    </Link>
+  </div>
+  
+  <div className="dashboard-button-wrapper">
+    <Link to="/receive-by-scan" className="dashboard-link">
+      <Button variant="secondary" size="large">
+        Прием по QR-коду
+      </Button>
+    </Link>
+  </div>
+
+  {/* Новая кнопка для выдачи */}
+  <div className="dashboard-button-wrapper">
+    <Link to="/issue-by-scan" className="dashboard-link">
+      <Button variant="success" size="large">
+        Выдача по QR-коду
+      </Button>
+    </Link>
+  </div>
+  
+  <div className="dashboard-button-wrapper">
+    <Button 
+      onClick={handleLogout}
+      variant="danger"
+      size="large"
+    >
+      Выйти
+    </Button>
+  </div>
+</div>
     </div>
   );
 }

@@ -76,6 +76,18 @@ export const getTransportMethods = async () => {
   return request('/api/dictionaries/transport-methods');
 };
 
+export const getContainers = async () => {
+  try {
+    console.log('Запрос контейнеров...');
+    const response = await request('/api/dictionaries/containers');
+    console.log('Контейнеры получены:', response);
+    return response;
+  } catch (error) {
+    console.error('Ошибка получения контейнеров:', error);
+    throw error;
+  }
+};
+
 export const createVehicleAct = async (formData) => {
   const token = localStorage.getItem('token');
   
@@ -103,4 +115,13 @@ export const createVehicleAct = async (formData) => {
 
 export const getCurrentUser = async () => {
   return request('/api/auth/me');
+};
+
+
+export const issueVehicle = async (actId, issueData) => {
+  console.log('Sending issue request:', { actId, issueData });
+  return request(`/vehicle-acts/${actId}/issue`, {
+    method: 'POST',
+    body: JSON.stringify(issueData),
+  });
 };

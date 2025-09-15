@@ -1,0 +1,74 @@
+.container-stuffing {
+  padding: 20px;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.form-section {
+  margin: 20px 0;
+}
+
+.form-section label {
+  display: block;
+  margin-bottom: 5px;
+  font-weight: bold;
+}
+
+.readonly-input, .container-select {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  font-size: 14px;
+}
+
+.scan-section {
+  margin: 30px 0;
+  text-align: center;
+}
+
+.scanner-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.scanner-content {
+  background: white;
+  padding: 20px;
+  border-radius: 10px;
+  max-width: 90%;
+  max-height: 90%;
+}
+
+.scanned-vehicles {
+  margin: 20px 0;
+}
+
+.vehicle-card {
+  border: 1px solid #ddd;
+  padding: 15px;
+  margin: 10px 0;
+  border-radius: 5px;
+  background: #f9f9f9;
+}
+
+.vehicle-card p {
+  margin: 5px 0;
+}
+
+.action-buttons {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-top: 30px;
+}
+

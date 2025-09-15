@@ -1,5 +1,5 @@
 import express from 'express';
-import { authenticateToken } from '../middleware/auth.js';
+import { authenticateToken } from '../middleware/auth/authMiddleware.js';
 import { prisma } from '../app.js';
 import multer from 'multer';
 import path from 'path';
@@ -429,7 +429,8 @@ router.get('/:id/print', authenticateToken, async (req, res) => {
   }
 });
 
-// Подтверждение приема ТС
+
+// Подтверждение приема ТС - ЭТОТ ЭНДПОИНТ ОТСУТСТВУЕТ И НУЖЕН!
 router.post('/:id/receive', authenticateToken, async (req, res) => {
   try {
     const { id } = req.params;
@@ -476,6 +477,65 @@ router.post('/:id/receive', authenticateToken, async (req, res) => {
     });
   }
 });
+
+// Эндпоинт для выдачи ТС - ДОЛЖЕН БЫТЬ ТАК
+router.post('/:id/issue', authenticateToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { issueType } = req.body;
+
+    console.log('Issue request for act ID:', id, 'Type:', issueType);
+
+    const act = await prisma.vehicleAct.findUnique({
+      where: { id }
+    });
+
+    if (!act) {
+      return res.status(404).json({ error: 'Акт не найден' });
+    }
+
+    if (act.status !== 'RECEIVED') {
+      return res.status(400).json({ 
+        error: 'ТС должно быть сначала принято (статус RECEIVED)' 
+      });
+    }
+
+    const updatedAct = await prisma.vehicleAct.update({
+      where: { id },
+      data: {
+        issueType,
+        issuedAt: new Date(),
+        issuedBy: { connect: { id: req.user.id } },
+        status: 'COMPLETED'
+      },
+      include: {
+        photos: true,
+        user: true,
+        carBrand: true,
+        carModel: true,
+        direction: true,
+        transportMethod: true,
+        Location: true,
+        issuedBy: {
+          select: {
+            id: true,
+            name: true,
+            email: true
+          }
+        }
+      }
+    });
+
+    res.json(updatedAct);
+  } catch (error) {
+    console.error('Issue vehicle error:', error);
+    res.status(500).json({ 
+      error: 'Ошибка при обработке выдачи ТС',
+      details: error.message 
+    });
+  }
+});
+
 
 // Проверка VIN
 router.get('/check-vin/:vin', authenticateToken, async (req, res) => {

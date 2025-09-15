@@ -696,6 +696,8 @@ export const vehicleActController = {
     }
   },
 
+
+  
   // Проверка VIN
   async checkVin(req, res) {
     try {
@@ -739,13 +741,97 @@ async confirmReceipt(req, res) {
     }
 
     const updatedAct = await prisma.vehicleAct.update({
+  where: { id },
+  data: {
+    status: 'RECEIVED',
+    receivedAt: new Date(),
+    // ОБНОВЛЯЕМ локацию на локацию пользователя - ПРАВИЛЬНОЕ ПОДКЛЮЧЕНИЕ
+    LocationId: user.locationId // Просто устанавливаем ID локации
+  },
+  include: {
+    photos: true,
+    user: {
+      select: {
+        id: true,
+        email: true,
+        name: true
+      }
+    },
+    carBrand: true,
+    carModel: true,
+    direction: true,
+    transportMethod: true,
+    Location: true // Включаем локацию в ответ
+  }
+});
+
+    res.json(updatedAct);
+  } catch (error) {
+    logger.error('Receive vehicle act error:', error);
+    res.status(500).json({ 
+      error: 'Ошибка при подтверждении приема ТС',
+      details: error.message 
+    });
+  }
+},
+
+// Выдача ТС
+async issueVehicleAct(req, res) {
+  try {
+    const { id } = req.params;
+    const { issueType, issueData } = req.body;
+    const userId = req.user.id;
+
+    console.log('Issue request:', { id, issueType, issueData, userId });
+
+    // 1. Получаем пользователя с его локацией
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      include: { location: true }
+    });
+
+    // 2. Получаем акт с его локацией
+    const act = await prisma.vehicleAct.findUnique({
       where: { id },
-      data: {
-        status: 'RECEIVED',
-        receivedAt: new Date(),
-        // ОБНОВЛЯЕМ локацию на локацию пользователя
-        Location: user.location ? { connect: { id: user.location.id } } : undefined
-      },
+      include: {
+        Location: true
+      }
+    });
+
+    if (!act) {
+      return res.status(404).json({ error: 'Акт не найден' });
+    }
+
+    // 3. ПРОВЕРКА ЛОКАЦИИ: Сравниваем ID локаций
+    if (user.locationId !== act.LocationId) {
+      const userLocationName = user.location?.name || 'Неизвестная локация';
+      const actLocationName = act.Location?.name || 'Неизвестная локация';
+      
+      return res.status(403).json({ 
+        error: `Ошибка локации. Вы находитесь на "${userLocationName}". ТС находится на "${actLocationName}". Выдача невозможна.` 
+      });
+    }
+
+    // 4. Проверяем статус акта
+    if (act.status !== 'RECEIVED') {
+      return res.status(400).json({ 
+        error: 'ТС должно быть сначала принято (статус "Принят") перед выдачей.' 
+      });
+    }
+
+    // 5. Подготавливаем данные для обновления
+    let updateData = {
+      issueType: issueType,
+      issueData: issueData || {},
+      issuedAt: new Date(),
+      issuedBy: { connect: { id: userId } },
+      status: issueType === 'CONTAINER' ? 'LOADED_INTO_CONTAINER' : 'COMPLETED'
+    };
+
+    // 6. Обновляем акт
+    const updatedAct = await prisma.vehicleAct.update({
+      where: { id },
+      data: updateData,
       include: {
         photos: true,
         user: {
@@ -759,17 +845,69 @@ async confirmReceipt(req, res) {
         carModel: true,
         direction: true,
         transportMethod: true,
-        Location: true // Включаем локацию в ответ
+        Location: true,
+        issuedBy: {
+          select: {
+            id: true,
+            name: true,
+            email: true
+          }
+        }
       }
     });
 
     res.json(updatedAct);
-  } catch (error) {
-    logger.error('Receive vehicle act error:', error);
+   } catch (error) {
+    logger.error('Issue vehicle act error:', error);
     res.status(500).json({ 
-      error: 'Ошибка при подтверждении приема ТС',
-      details: error.message 
+      error: 'Ошибка при оформлении выдачи ТС',
+      details: error.message,
+      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
     });
+  }
+},
+
+async getVehicleActByVinOrId(req, res) {
+  try {
+    const { identifier } = req.params;
+
+    // Пытаемся найти по ID
+    let act = await prisma.vehicleAct.findUnique({
+      where: { id: identifier },
+      include: {
+        photos: true,
+        carBrand: true,
+        carModel: true,
+        direction: true,
+        transportMethod: true,
+        Location: true
+      }
+    });
+
+    // Если не нашли по ID, ищем по VIN
+    if (!act) {
+      act = await prisma.vehicleAct.findFirst({
+        where: { vin: identifier },
+        include: {
+          photos: true,
+          carBrand: true,
+          carModel: true,
+          direction: true,
+          transportMethod: true,
+          Location: true
+        },
+        orderBy: { createdAt: 'desc' }
+      });
+    }
+
+    if (!act) {
+      return res.status(404).json({ error: 'Акт не найден' });
+    }
+
+    res.json(act);
+  } catch (error) {
+    logger.error('Get vehicle act by identifier error:', error);
+    res.status(500).json({ error: 'Ошибка при поиске акта' });
   }
 },
 

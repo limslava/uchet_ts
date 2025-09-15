@@ -15,6 +15,7 @@ const BODY_TYPES = [
 ];
 
 export const CarBrandsManager = () => {
+  console.log('CarBrandsManager rendered');
   const [models, setModels] = useState([]);
   const [brands, setBrands] = useState([]);
   const [loading, setLoading] = useState(true);
